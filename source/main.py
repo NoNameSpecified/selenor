@@ -6,7 +6,7 @@ from time import sleep
 from db import *
 
 """
-copied  from the internet, just to decrypt the token
+encryption bit copied  from the internet, just to decrypt the token
 """
 import base64
 import hashlib
@@ -17,6 +17,9 @@ BLOCK_SIZE = 16
 pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)
 unpad = lambda s: s[:-ord(s[len(s) - 1:])]
 encryptedToken = b'eUJhYc3woIJkgskY3BAKhxaTQ2GcN7xR8vc2vnJT57gKa48aqejeapPi9dGXwnEc0J29hFkP1I9YdfrEW21KnxX3Mn5O9IYDEX2cvu8qTng='
+
+# otherwise youd run the bot without permission lmao
+
 password = input("Enter password: ")
 
 def decrypt(enc, password):
