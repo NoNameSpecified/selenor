@@ -1,8 +1,9 @@
 import random, discord
 from discord.ext.commands import Bot
-from db import *
 from time import sleep
 
+# for this, it is the file in the db folder ( __init__.py )
+from db import *
 
 """
 copied  from the internet, just to decrypt the token
