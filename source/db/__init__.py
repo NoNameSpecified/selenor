@@ -259,7 +259,7 @@ class house_database_handler:
                     return "```diff\n- Your future expenses would be higher as your income.\nThis is not possible to change over he bot.\nAsk the staff for major changes that come with debt.```"
                 data["houses"][index][choice] = amount
                 if choice == "army":
-                    data["houses"][index]["workingPopulation"] = data["houses"][index]["workingPopulation"] - data["houses"][index]["army"]
+                    data["houses"][index]["workingPopulation"] = data["houses"][index]["population"] - data["houses"][index]["elderly"] -data["houses"][index]["children"]  - data["houses"][index]["army"]
                     data["houses"][index]["expenses"] = data["houses"][index]["army"] * 100
 
                 data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]
@@ -373,13 +373,13 @@ class house_database_handler:
             data = json.load(db)
             if house == "all":
                 for index in range(len(data["houses"])):
-                    data["houses"][index]["workingPopulation"] = data["houses"][index]["workingPopulation"] - data["houses"][index]["army"]
+                    data["houses"][index]["workingPopulation"] =  data["houses"][index]["population"] - data["houses"][index]["elderly"] -data["houses"][index]["children"] - data["houses"][index]["army"]
                     data["houses"][index]["expenses"] = data["houses"][index]["army"] * 100
                     data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]
 
             else:
                 index = self.find_index_in_db(data["houses"], house)
-                data["houses"][index]["workingPopulation"] = data["houses"][index]["workingPopulation"] - data["houses"][index]["army"]
+                data["houses"][index]["workingPopulation"] =  data["houses"][index]["population"] - data["houses"][index]["elderly"] -data["houses"][index]["children"] - data["houses"][index]["army"]
                 data["houses"][index]["expenses"] = data["houses"][index]["army"] * 100
                 data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]
 
