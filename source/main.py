@@ -1,12 +1,11 @@
 import random, discord
 from discord.ext.commands import Bot
+from db import *
 from time import sleep
 
-# for this, it is the file in the db folder ( __init__.py )
-from db import *
 
 """
-encryption bit copied  from the internet, just to decrypt the token
+copied  from the internet, just to decrypt the token
 """
 import base64
 import hashlib
@@ -17,9 +16,6 @@ BLOCK_SIZE = 16
 pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)
 unpad = lambda s: s[:-ord(s[len(s) - 1:])]
 encryptedToken = b'eUJhYc3woIJkgskY3BAKhxaTQ2GcN7xR8vc2vnJT57gKa48aqejeapPi9dGXwnEc0J29hFkP1I9YdfrEW21KnxX3Mn5O9IYDEX2cvu8qTng='
-
-# otherwise youd run the bot without permission lmao
-
 password = input("Enter password: ")
 
 def decrypt(enc, password):
@@ -35,6 +31,7 @@ decrypted = decrypt(encryptedToken, password)
 # init json handling and discord
 db = house_database_handler()
 staffMembers = ["Kendrik", "felix.rnd", "TheFlightEnthousiast"]
+powerRoles = ["lady", "lord", "mayor", "king", "hand", "leader"]
 BOT_PREFIX = ("\\")
 # Oof close your eyes please !
 token = decrypted.decode()
@@ -49,10 +46,24 @@ client = Bot(command_prefix=BOT_PREFIX)
 
 """
 
+# ALL THREE FUNCTION HAVE FAILED (ooof)
+# i might wanna check em later
 async def check_if_staff(uName):
-    if uName not in staffMembers:
+    print(uName)
+    if ctx.message.author.name not in staffMembers:
         await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
+        return 1
+    else:
         return 0
+
+async def check_if_boss(memberRoles):
+    memberRoles = [y.name.lower() for y in ctx.message.author.roles]
+    powerRoles = ["lady", "lord", "mayor", "king", "hand", "leader"]
+    for i in range(len(memberRoles)):
+        if powerRoles[i] in memberRoles[i].lower():
+            print("seems like he is powerful person")
+            member = memberRoles[i].lower()
+            power = 1
 
 async def yes_or_no_check():
     answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
@@ -60,6 +71,8 @@ async def yes_or_no_check():
     if yOrNo != "y" and yOrNo != "yes":
         await ctx.send("```\nabort```")
         return 1
+    else:
+        return 0
 
 # ~~~ custom status ~~~
 @client.event
@@ -145,6 +158,20 @@ async def population(ctx, mode="normal", value = None, amount = None):
 @client.command("send", pass_context=True, description="change single stuff", aliases=["pay"], brief="send money")
 async def singleChange(ctx, moneyReceiver="error", amount="error"):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
+
+    # check if allowed
+    for i in range(len(memberRoles)):
+        if powerRoles[i] in memberRoles[i].lower():
+            print("seems like he is powerful person")
+            member = memberRoles[i].lower()
+            power = 1
+    try:
+        print(power)
+    except:
+        if power != 1:
+            await ctx.send("Restricted access.")
+            return 0
+
     # automatically get role of user
     for i in range(len(memberRoles)):
         if memberRoles[i].lower().startswith("house_"):
@@ -156,7 +183,11 @@ async def singleChange(ctx, moneyReceiver="error", amount="error"):
 
     #  check again
     await ctx.send("```diff\n- Sending " + str(amount)+ " goldpiece from your house to " + str(moneyReceiver) +".\nConfirm and Checkout ? [y/N]```")
-    yes_or_no_check()
+    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+    yOrNo = answer.content.lower()
+    if yOrNo != "y" and yOrNo != "yes":
+        await ctx.send("```\nabort```")
+        return 1
     await ctx.send("```processing request.```")
     try:
         sendMoney = db.sendMoney(moneySender, moneyReceiver, amount)
@@ -170,6 +201,20 @@ async def singleChange(ctx, moneyReceiver="error", amount="error"):
 @client.command("change", pass_context=True, description="change single stuff", aliases=["bruv"], brief="who will ever look for this ?")
 async def singleChange(ctx):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
+
+    # check if allowed
+    for i in range(len(memberRoles)):
+        if powerRoles[i] in memberRoles[i].lower():
+            print("seems like he is powerful person")
+            member = memberRoles[i].lower()
+            power = 1
+    try:
+        print(power)
+    except:
+        if power != 1:
+            await ctx.send("`Restricted access.`")
+            return 0
+
     print(memberRoles)
     MAX_KNIGHTS = 15
     MAX_GUARDS = 100
@@ -249,7 +294,11 @@ async def singleChange(ctx):
         sleep(0.1)
 
     #  check again
-    yes_or_no_check()
+    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+    yOrNo = answer.content.lower()
+    if yOrNo != "y" and yOrNo != "yes":
+        await ctx.send("```\nabort```")
+        return 1
     await ctx.send("```processing request.```")
     print("Processing for ", houseRole, "\nWants to change ", choice, ", ", amount)
     # use the database handler
@@ -277,16 +326,24 @@ async def singleChange(ctx):
 # ~~~ update all houses ~~~
 @client.command("updateAll", pass_context=True, brief="update user", aliases=['updateall', 'all'])
 async def updateAll(ctx):
-    check_if_staff(ctx.message.author.name)
+    if ctx.message.author.name not in staffMembers:
+        await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
+        return 1
     await ctx.send("```diff\nSure [y/N]```")
-    yes_or_no_check()
+    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+    yOrNo = answer.content.lower()
+    if yOrNo != "y" and yOrNo != "yes":
+        await ctx.send("```\nabort```")
+        return 1
     await ctx.send("```processing request.```")
     db.updateAll()
 
 # ~~~ fully update a specific house ~~~
 @client.command("updateHouse", pass_context=True, brief="update user", aliases=['update', 'updateuser'])
 async def updateUser(ctx):
-    check_if_staff(ctx.message.author.name)
+    if ctx.message.author.name not in staffMembers:
+        await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
+        return 1
     await ctx.send("Updating Uname :")
     uName = await client.wait_for('message', check=lambda message: message.author == ctx.author)
     uName = uName.content
@@ -297,7 +354,9 @@ async def updateUser(ctx):
 @client.command("changeHouse", pass_context=True, description="only staff", aliases=["staff1"], brief="who will ever look for this ?")
 async def singleStaffChange(ctx):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
-    check_if_staff(ctx.message.author.name)
+    if ctx.message.author.name not in staffMembers:
+        await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
+        return 1
     await ctx.send("House to change :")
     sleep(0.1)
     answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
@@ -314,7 +373,11 @@ async def singleStaffChange(ctx):
     amount = float(answer.content.lower().strip())
     #  check again
     await ctx.send("```diff\nSure [y/N]```")
-    yes_or_no_check()
+    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+    yOrNo = answer.content.lower()
+    if yOrNo != "y" and yOrNo != "yes":
+        await ctx.send("```\nabort```")
+        return 1
     await ctx.send("```processing request.```")
     print("Processing for ", houseRole, "\nWants to change ", choice, ", ", amount)
     # use the database handler
@@ -328,7 +391,9 @@ async def singleStaffChange(ctx):
 @client.command("changePlayer", pass_context=True, description="only staff", aliases=["staff2", "changeUser"], brief="who will ever look for this ?")
 async def singleStaffChange(ctx):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
-    check_if_staff(ctx.message.author.name)
+    if ctx.message.author.name not in staffMembers:
+        await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
+        return 1
     await ctx.send("player to change :")
     sleep(0.1)
     answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
@@ -345,7 +410,11 @@ async def singleStaffChange(ctx):
     amount = float(answer.content.lower().strip())
     #  check again
     await ctx.send("```diff\nSure [y/N]```")
-    yes_or_no_check()
+    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+    yOrNo = answer.content.lower()
+    if yOrNo != "y" and yOrNo != "yes":
+        await ctx.send("```\nabort```")
+        return 1
     await ctx.send("```processing request.```")
     print("Processing for ", houseRole, "\nWants to change ", choice, ", ", amount)
     # use the database handler
@@ -358,7 +427,9 @@ async def singleStaffChange(ctx):
 @client.command("init_user", pass_context=True, brief="create a new player",  aliases=['create', 'createUser'])
 async def initUser(ctx):
     # only staff can create members
-    check_if_staff(ctx.message.author.name)
+    if ctx.message.author.name not in staffMembers:
+        await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
+        return 1
 
     await ctx.send("NICKNAME of player :")
     uName = await client.wait_for('message', check=lambda message: message.author == ctx.author)
@@ -412,7 +483,9 @@ async def initUser(ctx):
 @client.command("init", pass_context=True, brief="create a new house",  aliases=['createHouse'])
 async def initHouse(ctx):
     # only staff can create members
-    check_if_staff(ctx.message.author.name)
+    if ctx.message.author.name not in staffMembers:
+        await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
+        return 1
 
 
 
