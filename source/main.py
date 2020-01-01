@@ -31,7 +31,7 @@ decrypted = decrypt(encryptedToken, password)
 # init json handling and discord
 db = house_database_handler()
 staffMembers = ["Kendrik", "felix.rnd", "TheFlightEnthousiast"]
-powerRoles = ["lady", "lord", "mayor", "king", "hand", "leader"]
+powerRoles = ["lady", "lord", "mayor", "king", "hand", "house leader"]
 BOT_PREFIX = ("\\")
 # Oof close your eyes please !
 token = decrypted.decode()
@@ -160,17 +160,19 @@ async def singleChange(ctx, moneyReceiver="error", amount="error"):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
 
     # check if allowed
+    for i in range(len(powerRoles)):
+        if powerRoles[i] in ctx.message.author.display_name:
+            power = 1
     for i in range(len(memberRoles)):
-        if powerRoles[i] in memberRoles[i].lower():
+        if powerRoles[i] in memberRoles[i].lower() or memberRoles[i].lower() == "house leader":
             print("seems like he is powerful person")
             member = memberRoles[i].lower()
             power = 1
     try:
         print(power)
     except:
-        if power != 1:
-            await ctx.send("Restricted access.")
-            return 0
+        await ctx.send("Restricted access.")
+        return 0
 
     # automatically get role of user
     for i in range(len(memberRoles)):
@@ -203,17 +205,19 @@ async def singleChange(ctx):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
 
     # check if allowed
+    for i in range(len(powerRoles)):
+        if powerRoles[i] in ctx.message.author.display_name:
+            power = 1
     for i in range(len(memberRoles)):
-        if powerRoles[i] in memberRoles[i].lower():
+        if powerRoles[i] in memberRoles[i].lower() or memberRoles[i].lower() == "house leader":
             print("seems like he is powerful person")
             member = memberRoles[i].lower()
             power = 1
     try:
         print(power)
     except:
-        if power != 1:
-            await ctx.send("`Restricted access.`")
-            return 0
+        await ctx.send("Restricted access.")
+        return 0
 
     print(memberRoles)
     MAX_KNIGHTS = 15
