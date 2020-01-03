@@ -10,6 +10,7 @@ import os
 """
 
 
+
 class house_database_handler:
     def __init__(self, pathToJson="database.json"):
         self.pathToJson = pathToJson
@@ -44,19 +45,25 @@ class house_database_handler:
         return index
 
     # pay from house to house
-    def sendMoney(self, sender, receiver, amount):
+    def sendMoney(self, sender, receiver, amount, mode):
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
 
             senderIndex = self.find_index_in_db(data["houses"], sender)
-            receiverIndex = self.find_index_in_db(data["houses"], receiver)
+            if mode == "houses":
+                receiverIndex = self.find_index_in_db(data["houses"], receiver)
+            elif mode == "guilds":
+                receiverIndex = self.find_index_in_db(data["guilds"], receiver)
+            else:
+                return "error"
 
             print(data["houses"][senderIndex]["totalGold"])
             data["houses"][senderIndex]["totalGold"] = data["houses"][senderIndex]["totalGold"] - amount
             print(data["houses"][senderIndex]["totalGold"])
-            print(data["houses"][receiverIndex]["totalGold"])
-            data["houses"][receiverIndex]["totalGold"] = data["houses"][receiverIndex]["totalGold"] + amount
-            print(data["houses"][receiverIndex]["totalGold"])
+            print(mode, receiverIndex)
+            print(data[mode][receiverIndex]["totalGold"])
+            data[mode][receiverIndex]["totalGold"] = data[mode][receiverIndex]["totalGold"] + amount
+            print(data[mode][receiverIndex]["totalGold"])
             # finish, write, close
             self.overwrite_json_db(data)
             return "`Sent the CA$H`"
@@ -105,10 +112,18 @@ class house_database_handler:
                     except:
                         return "Nope, wrong value it seems"
                         {'name': 'mistress adelaide s airgetlam', 'house': 'house_airgetlam', 'age': 12, 'attackStats': 0, 'counterStats': 0, 'equipment': 'unarmed', 'dexterity': 0, 'assassinationCapacity': 0, 'guards': '3'}
+
                 else:
                     name = str(data["players"][index]["name"]); house = str(data["players"][index]["house"]) ; age = str(data["players"][index]["age"]) ;  attackStats = str(data["players"][index]["attackStats"]) ;  dexterity = str(data["players"][index]["dexterity"]) ; counterStats = str(data["players"][index]["counterStats"]) ; equipment = str(data["players"][index]["equipment"]) ; assassinationCapacity = str(data["players"][index]["assassinationCapacity"]) ; guards = str(data["players"][index]["guards"])
                     formattedInfo = str("\n```diff\n-        Stats of Player : " + name + ":\nhouse : " + house + "\nAge : " + age + "\nattackStats : " + attackStats + "\ncounterStats : " + counterStats + "\nequipment : " + equipment + "\ndexterity: " + dexterity + "\nassassinationCapacity : " + assassinationCapacity + "\nguards : " + guards + "```")
 
+                    return formattedInfo
+
+            # guilds
+            elif mode == "guilds":
+                    index = self.find_index_in_db(data["guilds"], user)
+                    name = str(data["guilds"][index]["name"]); owner = str(data["guilds"][index]["owner"]) ; location = str(data["guilds"][index]["location"]) ;  totalGold = str(data["guilds"][index]["totalGold"])
+                    formattedInfo = str("\n```diff\n-        Stats of Guild of " + name + ":\nOwner : " + owner + "\nLocation : " + location + "\nTotal Gold : " + totalGold + "```")
                     return formattedInfo
 
     # to get a list with all users.
@@ -119,6 +134,9 @@ class house_database_handler:
     def listUsers(self):
         with open(self.pathToJson, "r") as db:
             data = json.load(db) ; x = [data["players"][i]["name"] for i in range(len(data["players"]))] ; return x
+    def listGuilds(self):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db) ; x = [data["guilds"][i]["name"] for i in range(len(data["guilds"]))] ; return x
 
 
     # create a player character
@@ -258,12 +276,15 @@ class house_database_handler:
                 if futureExpenses > data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"] :
                     return "```diff\n- Your future expenses would be higher as your income.\nThis is not possible to change over he bot.\nAsk the staff for major changes that come with debt.```"
                 data["houses"][index][choice] = amount
+                data["houses"][index]["workingPopulation"] = int(data["houses"][index]["population"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
+                data["houses"][index]["men"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
+                data["houses"][index]["women"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
+                data["houses"][index]["lowerClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["lowerClassRate"])
+                data["houses"][index]["upperClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["upperClassRate"])
+                data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
+                data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["upperClass"] * data["houses"][index]["upperClassTax"]
                 if choice == "army":
-                    data["houses"][index]["workingPopulation"] = data["houses"][index]["population"] - data["houses"][index]["elderly"] -data["houses"][index]["children"]  - data["houses"][index]["army"]
-                    data["houses"][index]["expenses"] = data["houses"][index]["army"] * 100
-
-                data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]
-
+                    data["houses"][index]["expenese"] = amount * self.armySalary
 
         if mode == "players":
             print("Changing for ", houseRole)
@@ -373,14 +394,24 @@ class house_database_handler:
             data = json.load(db)
             if house == "all":
                 for index in range(len(data["houses"])):
-                    data["houses"][index]["workingPopulation"] =  data["houses"][index]["population"] - data["houses"][index]["elderly"] -data["houses"][index]["children"] - data["houses"][index]["army"]
-                    data["houses"][index]["expenses"] = data["houses"][index]["army"] * 100
-                    data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]
+                    data["houses"][index]["workingPopulation"] = int(data["houses"][index]["population"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
+                    data["houses"][index]["men"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
+                    data["houses"][index]["women"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
+                    data["houses"][index]["lowerClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["lowerClassRate"])
+                    data["houses"][index]["upperClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["upperClassRate"])
+                    data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
+                    data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["upperClass"] * data["houses"][index]["upperClassTax"]
+                    data["houses"][index]["expenese"] = data["houses"][index]["army"] * self.armySalary
 
             else:
                 index = self.find_index_in_db(data["houses"], house)
-                data["houses"][index]["workingPopulation"] =  data["houses"][index]["population"] - data["houses"][index]["elderly"] -data["houses"][index]["children"] - data["houses"][index]["army"]
-                data["houses"][index]["expenses"] = data["houses"][index]["army"] * 100
-                data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]
+                data["houses"][index]["workingPopulation"] = int(data["houses"][index]["population"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
+                data["houses"][index]["men"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
+                data["houses"][index]["women"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
+                data["houses"][index]["lowerClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["lowerClassRate"])
+                data["houses"][index]["upperClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["upperClassRate"])
+                data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
+                data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["upperClass"] * data["houses"][index]["upperClassTax"]
+                data["houses"][index]["expenese"] = data["houses"][index]["army"] * self.armySalary
 
         self.overwrite_json_db(data)
