@@ -15,8 +15,15 @@ from Crypto import Random
 BLOCK_SIZE = 16
 pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)
 unpad = lambda s: s[:-ord(s[len(s) - 1:])]
-encryptedToken = b'eUJhYc3woIJkgskY3BAKhxaTQ2GcN7xR8vc2vnJT57gKa48aqejeapPi9dGXwnEc0J29hFkP1I9YdfrEW21KnxX3Mn5O9IYDEX2cvu8qTng='
+encryptedToken = b'pQ88Unwa617iyMZ0o3vghxrPhyUsvi2o/bKmOCr63Cpiw/2mo927AETjqJ/OdilHCY0c6+Epxsy82a+CXqX1I+YEw79wdMEFky5w+h4SlLI='
 password = input("Enter password: ")
+
+def encrypt(raw, password):
+    private_key = hashlib.sha256(password.encode("utf-8")).digest()
+    raw = pad(raw)
+    iv = Random.new().read(AES.block_size)
+    cipher = AES.new(private_key, AES.MODE_CBC, iv)
+    return base64.b64encode(iv + cipher.encrypt(raw))
 
 def decrypt(enc, password):
     private_key = hashlib.sha256(password.encode("utf-8")).digest() ; enc = base64.b64decode(enc) ; iv = enc[:16] ; cipher = AES.new(private_key, AES.MODE_CBC, iv) ; return unpad(cipher.decrypt(enc[16:]))
@@ -78,7 +85,7 @@ async def yes_or_no_check():
 @client.event
 async def on_ready():
     activity = discord.Game(name="The Crown of Selenor")
-    await client.change_presence(status=discord.Status.idle, activity=activity)
+    await client.change_presence(status=discord.Status.do_not_disturb, activity=activity)
 
 # ~~~ list houses ~~~
 @client.command("listHouses", pass_context=True, brief="List all users", aliases=['listhouses', 'list1'])
@@ -94,6 +101,15 @@ async def listHouse(ctx):
 async def listUser(ctx):
     try:
         x = db.listUsers()
+        await ctx.send(x)
+    except:
+        await ctx.send("Internal Error. Call Admin")
+
+# ~~~ list users ~~~
+@client.command("listGuilds", pass_context=True, brief="List all users", aliases=['listguilds', 'list3'])
+async def listUser(ctx):
+    try:
+        x = db.listGuilds()
         await ctx.send(x)
     except:
         await ctx.send("Internal Error. Call Admin")
@@ -154,6 +170,25 @@ async def population(ctx, mode="normal", value = None, amount = None):
         await ctx.send(str(info))
 
 
+# ~~~ get information about the population of yourself ~~~
+@client.command("guild", pass_context=True, description="get some info", aliases=["guildInfo"], brief="information about your guild")
+async def population(ctx, guild="error"):
+    #if guild == "error":
+    #    await ctx.send("Give guild to look for")
+    #    return 1
+
+    memberRoles = [y.name.lower() for y in ctx.message.author.roles]
+    # automatically get role of user
+    for i in range(len(memberRoles)):
+        if "guild of " in memberRoles[i]:
+            print("ha, gotcha")
+            memberRole = memberRoles[i].split()
+            member = memberRoles[3]
+
+    info = db.lookFor(member, "guilds", None, None, None)
+    await ctx.send(str(info))
+
+
 # ~~~ update specific stuff ~~~
 @client.command("send", pass_context=True, description="change single stuff", aliases=["pay"], brief="send money")
 async def singleChange(ctx, moneyReceiver="error", amount="error"):
@@ -181,6 +216,11 @@ async def singleChange(ctx, moneyReceiver="error", amount="error"):
             moneySender = memberRoles[i].lower()
     if moneySender == "error" or moneyReceiver == "error" or amount == "error":
         await ctx.send("```diff\n- Error - use the command as\n\\send TO AMOUNT```")
+    x = db.listHouses()
+    if moneyReceiver not in x:
+        mode = "guilds"
+    else:
+        mode = "houses"
     amount = int(amount)
 
     #  check again
@@ -192,7 +232,7 @@ async def singleChange(ctx, moneyReceiver="error", amount="error"):
         return 1
     await ctx.send("```processing request.```")
     try:
-        sendMoney = db.sendMoney(moneySender, moneyReceiver, amount)
+        sendMoney = db.sendMoney(moneySender, moneyReceiver, amount, mode)
         await ctx.send(sendMoney)
     except:
         await ctx.send("`Error.`")
