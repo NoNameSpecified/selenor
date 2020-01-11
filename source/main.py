@@ -3,9 +3,22 @@ from discord.ext.commands import Bot
 from db import *
 from time import sleep
 
+"""
+INFO :
+
+    this is a discord bot, to be used by players in discord to get informations about their specific things,
+     stats etc.
+
+    the discord things (ctx module and all) are from the discord API (import discord)
+
+    the database handler is from db/__init__.py
 
 """
-copied  from the internet, just to decrypt the token
+
+
+"""
+encryption bit copied from the internet, it is only to decrypt the token
+otherwise people could see the token and run an imposter bot if i forget to delete it when i share the code
 """
 import base64
 import hashlib
@@ -29,22 +42,25 @@ def decrypt(enc, password):
     private_key = hashlib.sha256(password.encode("utf-8")).digest() ; enc = base64.b64decode(enc) ; iv = enc[:16] ; cipher = AES.new(private_key, AES.MODE_CBC, iv) ; return unpad(cipher.decrypt(enc[16:]))
 decrypted = decrypt(encryptedToken, password)
 
+
+# --------- BOT CODE BELOW -----------
+
+
 """
 
 // INIT
 
 """
 
+
 # init json handling and discord
 db = house_database_handler()
-staffMembers = ["Kendrik", "felix.rnd", "TheFlightEnthousiast"]
+staffMembers = ["Kendrik", "Faerix", "TheFlightEnthousiast"]
 powerRoles = ["lady", "lord", "mayor", "king", "hand", "house leader"]
 BOT_PREFIX = ("\\")
 # Oof close your eyes please !
 token = decrypted.decode()
 client = Bot(command_prefix=BOT_PREFIX)
-
-
 
 
 """
@@ -53,42 +69,21 @@ client = Bot(command_prefix=BOT_PREFIX)
 
 """
 
-# ALL THREE FUNCTION HAVE FAILED (ooof)
-# i might wanna check em later
-async def check_if_staff(uName):
-    print(uName)
-    if ctx.message.author.name not in staffMembers:
-        await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
-        return 1
-    else:
-        return 0
 
-async def check_if_boss(memberRoles):
-    memberRoles = [y.name.lower() for y in ctx.message.author.roles]
-    powerRoles = ["lady", "lord", "mayor", "king", "hand", "leader"]
-    for i in range(len(memberRoles)):
-        if powerRoles[i] in memberRoles[i].lower():
-            print("seems like he is powerful person")
-            member = memberRoles[i].lower()
-            power = 1
+# ~~~ er nothing to see here ! move on ~~~
+@client.command("gFuel", pass_context=True, brief="nothing to see here", aliases=['69'])
+async def listHouse(ctx):
+    if (ctx.message.author.name == "MUNKIE🐒🍑" or ctx.message.author.name == "Kendrik") and ctx.channel.name == "munkie-gang":
+        await ctx.send("MUNKIE🐒🍑 is the pengest ever -PArAnoiD 2020")
 
-async def yes_or_no_check():
-    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    yOrNo = answer.content.lower()
-    if yOrNo != "y" and yOrNo != "yes":
-        await ctx.send("```\nabort```")
-        return 1
-    else:
-        return 0
-
-# ~~~ custom status ~~~
+# ~~~ set custom status ~~~
 @client.event
 async def on_ready():
     activity = discord.Game(name="The Crown of Selenor")
     await client.change_presence(status=discord.Status.do_not_disturb, activity=activity)
 
 # ~~~ list houses ~~~
-@client.command("listHouses", pass_context=True, brief="List all users", aliases=['listhouses', 'list1'])
+@client.command("listHouses", pass_context=True, brief="List all houses", aliases=['listhouses', 'list1'])
 async def listHouse(ctx):
     try:
         x = db.listHouses()
@@ -97,7 +92,7 @@ async def listHouse(ctx):
         await ctx.send("Internal Error. Call Admin")
 
 # ~~~ list users ~~~
-@client.command("listUsers", pass_context=True, brief="List all users", aliases=['listusers', 'list2'])
+@client.command("listUsers", pass_context=True, brief="List all characters", aliases=['listusers', 'list2'])
 async def listUser(ctx):
     try:
         x = db.listUsers()
@@ -105,8 +100,8 @@ async def listUser(ctx):
     except:
         await ctx.send("Internal Error. Call Admin")
 
-# ~~~ list users ~~~
-@client.command("listGuilds", pass_context=True, brief="List all users", aliases=['listguilds', 'list3'])
+# ~~~ list guilds ~~~
+@client.command("listGuilds", pass_context=True, brief="List all guilds", aliases=['listguilds', 'list3'])
 async def listUser(ctx):
     try:
         x = db.listGuilds()
@@ -114,32 +109,38 @@ async def listUser(ctx):
     except:
         await ctx.send("Internal Error. Call Admin")
 
-"""
-
-// USER THINGSParanoid Staff
 
 """
 
-# ~~~ get information about the population of someone ~~~
-@client.command("fuck", pass_context=True)
+// USER THINGS
+
+"""
+
+
+# ~~~ recalculate the economy without updating population etc ~~~
+@client.command("recalibrate", pass_context=True)
 async def population(ctx):
     db.recalculate_economy("all")
     await ctx.send("ok")
 
-# ~~~ get information about the population of someone ~~~
-@client.command("stats", pass_context=True, description="get some info", aliases=["population"], brief="information about your population")
+# ~~~ "\stats" to get information about input house ; "\stats" house_xyz for admin ~~~
+@client.command("stats", pass_context=True, aliases=["population"], brief="information about your population")
 async def population(ctx, member="error"):
-    memberRoles = [y.name.lower() for y in ctx.message.author.roles]
     # automatically get role of user
+    memberRoles = [y.name.lower() for y in ctx.message.author.roles]
+    # try to get automatically the house of caller
     for i in range(len(memberRoles)):
         if memberRoles[i].lower().startswith("house_"):
             print("ha, gotcha")
             member = memberRoles[i].lower()
+    # if he has house role and royal administration -> prefer royal
     if "royal_administration" in memberRoles:
         member = "royal_administration"
+    # by default return an error, this is just when staff calls command without precising
     if member == "error":
         await ctx.send("```diff\n- Enter a name too```")
         return "error"
+    # obsolete
     if member not in memberRoles and ctx.message.author.name not in staffMembers:
         await ctx.send("goddamnit")
         return 0
@@ -149,8 +150,8 @@ async def population(ctx, member="error"):
     await ctx.send(info)
 
 
-# ~~~ get information about the population of yourself ~~~
-@client.command("me", pass_context=True, description="get some info", aliases=["personal"], brief="information about your character")
+# ~~~ get character info ONLY for users NOT STAFF ~~~
+@client.command("me", pass_context=True, aliases=["personal"], brief="information about your character")
 async def population(ctx, mode="normal", value = None, amount = None):
     member = ctx.message.author.display_name
     member = member.lower().strip()
@@ -165,36 +166,42 @@ async def population(ctx, mode="normal", value = None, amount = None):
             return 1
         info = db.lookFor(member, "personal", mode, value, amount)
         await ctx.send(info)
-    else:
-        info = db.lookFor(member, "personal", mode, None, None)
-        await ctx.send(str(info))
+    info = db.lookFor(member, "personal", mode, None, None)
+    await ctx.send(str(info))
 
 
 # ~~~ get information about the population of yourself ~~~
-@client.command("guild", pass_context=True, description="get some info", aliases=["guildInfo"], brief="information about your guild")
+@client.command("guild", pass_context=True, aliases=["guildInfo"], brief="information about your guild")
 async def population(ctx, guild="error"):
-    #if guild == "error":
-    #    await ctx.send("Give guild to look for")
-    #    return 1
-
+    # look into first function where we use memberRoles to understand
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
     # automatically get role of user
     for i in range(len(memberRoles)):
+        print(memberRoles[i])
         if "guild of " in memberRoles[i]:
             print("ha, gotcha")
             memberRole = memberRoles[i].split()
-            member = memberRoles[3]
+            print(memberRole)
+            member = memberRole[2]
+            print(memberRole)
+
+    if ctx.message.author.name in staffMembers:
+        member == guild
+    if member == "error":
+        await ctx.send("Give guild to look for")
+        return 1
+    print(member)
 
     info = db.lookFor(member, "guilds", None, None, None)
     await ctx.send(str(info))
 
 
-# ~~~ update specific stuff ~~~
-@client.command("send", pass_context=True, description="change single stuff", aliases=["pay"], brief="send money")
+# ~~~ houses can send gold to a house or to a guild ~~~
+@client.command("send", pass_context=True, aliases=["pay"], brief="send money to house / guild")
 async def singleChange(ctx, moneyReceiver="error", amount="error"):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
 
-    # check if allowed
+    # check if allowed (only house leader)
     for i in range(len(powerRoles)):
         if powerRoles[i] in ctx.message.author.display_name:
             power = 1
@@ -208,8 +215,8 @@ async def singleChange(ctx, moneyReceiver="error", amount="error"):
     except:
         await ctx.send("Restricted access.")
         return 0
-
-    # automatically get role of user
+    # passed test so lets go
+    # automatically get house of user
     for i in range(len(memberRoles)):
         if memberRoles[i].lower().startswith("house_"):
             print("ha, gotcha")
@@ -238,35 +245,35 @@ async def singleChange(ctx, moneyReceiver="error", amount="error"):
         await ctx.send("`Error.`")
 
 
-
 # ~~~ update specific stuff ~~~
-@client.command("change", pass_context=True, description="change single stuff", aliases=["bruv"], brief="who will ever look for this ?")
+@client.command("change", pass_context=True, aliases=["noOneWillUseThisAliasDummy"], brief="house leader can change taxes and army")
 async def singleChange(ctx):
+    """
+    TODO : make a single function for taxes (syntax \taxes class newTax )
+    """
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
-
-    # check if allowed
-    for i in range(len(powerRoles)):
-        if powerRoles[i] in ctx.message.author.display_name:
-            power = 1
-    for i in range(len(memberRoles)):
-        if powerRoles[i] in memberRoles[i].lower() or memberRoles[i].lower() == "house leader":
-            print("seems like he is powerful person")
-            member = memberRoles[i].lower()
-            power = 1
     try:
-        print(power)
+        # check if allowed
+        for i in range(len(powerRoles)):
+            if powerRoles[i] in ctx.message.author.display_name or "king" in ctx.message.author.display_name:
+                power = 1
+        for i in range(len(memberRoles)):
+            if powerRoles[i] in memberRoles[i].lower() or memberRoles[i].lower() == "house leader":
+                print("seems like he is powerful person")
+                member = memberRoles[i].lower()
+                power = 1
+        try:
+            print(power)
+        except:
+            await ctx.send("Restricted access.")
+            return 0
     except:
-        await ctx.send("Restricted access.")
-        return 0
+        pass
 
     print(memberRoles)
-    MAX_KNIGHTS = 15
-    MAX_GUARDS = 100
-    KNIGHTS_SALARY = 15000
-    GUARDS_SALARIY = 15000
     ARMY_SALARY = 100
 
-    # automatically get role of user
+    # automatically get role of user (still privilegate royal_administration)
     if "royal_administration" in memberRoles:
         houseRole = "royal_administration"
     else:
@@ -298,7 +305,11 @@ async def singleChange(ctx):
         await ctx.send("```diff\nAmount of : " + choice + "```")
         sleep(0.1)
         answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-        amount = int(answer.content.lower().strip())
+        try:
+            amount = int(answer.content.lower().strip())
+        except:
+            await ctx.send("hmmm")
+            return "error"
         if choice == "army":
             salary = ARMY_SALARY
 
@@ -353,12 +364,6 @@ async def singleChange(ctx):
 
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ~~~~~~~~~~~~~~~~~~~~~ berlin wall be like ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
 """
 
 // START OF STAFF ONLY
@@ -366,8 +371,7 @@ async def singleChange(ctx):
 """
 
 
-
-# ~~~ update all houses ~~~
+# ~~~ update all houses (used once per week, changes population etc) ~~~
 @client.command("updateAll", pass_context=True, brief="update user", aliases=['updateall', 'all'])
 async def updateAll(ctx):
     if ctx.message.author.name not in staffMembers:
@@ -381,9 +385,12 @@ async def updateAll(ctx):
         return 1
     await ctx.send("```processing request.```")
     db.updateAll()
+    await ctx.send("hmm. i dont get any wrong response... lets say it worked !")
 
-# ~~~ fully update a specific house ~~~
-@client.command("updateHouse", pass_context=True, brief="update user", aliases=['update', 'updateuser'])
+
+# ~~~ fully update a specific house (ex to try something, then rollback tho) ~~~
+# ~~~ above function in fact loops through all houses with this function (in the db module) ~~~
+@client.command("updateHouse", pass_context=True, brief="update ALL houses", aliases=['update', 'updateuser'])
 async def updateUser(ctx):
     if ctx.message.author.name not in staffMembers:
         await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
@@ -395,7 +402,7 @@ async def updateUser(ctx):
     await ctx.send(returned)
 
 # ~~~ update specific stuff ADMIN STUFF ~~~
-@client.command("changeHouse", pass_context=True, description="only staff", aliases=["staff1"], brief="who will ever look for this ?")
+@client.command("changeHouse", pass_context=True, aliases=["staff1"], brief="staff can update a house")
 async def singleStaffChange(ctx):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
     if ctx.message.author.name not in staffMembers:
@@ -432,7 +439,7 @@ async def singleStaffChange(ctx):
 
 
 # ~~~ staff change player stats ~~~
-@client.command("changePlayer", pass_context=True, description="only staff", aliases=["staff2", "changeUser"], brief="who will ever look for this ?")
+@client.command("changePlayer", pass_context=True, aliases=["staff2", "changeUser"], brief="staff can change character stats")
 async def singleStaffChange(ctx):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
     if ctx.message.author.name not in staffMembers:
@@ -451,7 +458,8 @@ async def singleStaffChange(ctx):
     await ctx.send("```diff\nNew Value : ```")
     sleep(0.1)
     answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    amount = float(answer.content.lower().strip())
+    if choice != "name": amount = float(answer.content.lower().strip())
+    else: amount = str(answer.content.lower().strip())
     #  check again
     await ctx.send("```diff\nSure [y/N]```")
     answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
@@ -467,8 +475,9 @@ async def singleStaffChange(ctx):
     # // or if there was an error returned, send error message
     await ctx.send(updated)
 
+
 # ~~~ init a user ~~~
-@client.command("init_user", pass_context=True, brief="create a new player",  aliases=['create', 'createUser'])
+@client.command("initUser", pass_context=True, brief="create a new player",  aliases=['createUser', 'init_user'])
 async def initUser(ctx):
     # only staff can create members
     if ctx.message.author.name not in staffMembers:
@@ -524,14 +533,12 @@ async def initUser(ctx):
 
 
 # ~~~ init a house ~~~
-@client.command("init", pass_context=True, brief="create a new house",  aliases=['createHouse'])
+@client.command("initHouse", pass_context=True, brief="create a new house",  aliases=['createHouse', 'init_house'])
 async def initHouse(ctx):
     # only staff can create members
     if ctx.message.author.name not in staffMembers:
         await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
         return 1
-
-
 
     """
         Asking all the stuff
@@ -655,19 +662,49 @@ async def initHouse(ctx):
     else:
         await ctx.send("aborted")
 
+# ~~~  ~~~
+@client.command("user", pass_context=True, brief="get user info",  aliases=['staff only'])
+async def showMe(ctx, *, member="error"):
+    print(member)
+    if ctx.message.author.name in staffMembers:
+        member = member.lower().strip()
+    if ctx.message.author.name in staffMembers and member == "error":
+        await ctx.send("```diff\n- Enter a name too```")
+        return "error"
+    elif ctx.message.author.name in staffMembers:
+        member = member.lower().strip()
+    elif member == "error":
+        return "error"
 
+    info = db.lookFor(member, "personal", "normale", None, None)
+    await ctx.send(str(info))
+
+
+
+"""
+                |--------------------------------|
+            o --|  filthy russians communists !! |
+           \|/  |--------------------------------|
+           / \
+"""
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~ berlin wall be like ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
+"""
+                |---------------------|
+            o --|  тупые американцы ! |
+           \|/  |---------------------|
+           / \
 """
 
+
+
+
+""" (yes i use multi line AND one line comment)
 # all set up ! we can go !
-
 """
-
 
 # RUN RUN RUN RUN - I CAN BE A BACKPACK WHILE YOU JUMP (seagulls - stop it now !)
-print("LETS GO")
+print("Starting bot")
 client.run(token)
+# tada ! line 709 at 11.01.20 lmao
