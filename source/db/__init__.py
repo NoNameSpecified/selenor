@@ -37,12 +37,12 @@ class house_database_handler:
         self.json_db.close()
 
     def find_index_in_db(self, dataToFindIn, userNameToFind):
-        index = -1
         for i in range(len(dataToFindIn)):
+            print(userNameToFind)
             if dataToFindIn[i]["name"].lower() == userNameToFind.lower():
                 return i
-        # -1 will be used as error in below functions
-        return index
+        # as we return a string the program will abort
+        return "nope"
 
     # pay from house to house
     def sendMoney(self, sender, receiver, amount, mode):
@@ -85,12 +85,18 @@ class house_database_handler:
                     return "```diff\n- error, get the name right pls```"
                 print("checkpoint 2")
                 # that took some time..
-                name = str(data["houses"][index]["name"]) ; population = str(data["houses"][index]["population"]) ; natality = str(data["houses"][index]["natality"]) ; childrenRate = str(data["houses"][index]["childrenRate"]) ; elderlyRate = str(data["houses"][index]["elderlyRate"]) ; mortality = str(data["houses"][index]["mortality"]) ; popularity = str(data["houses"][index]["popularity"]) ; children = str(data["houses"][index]["children"]) ; elderly = str(data["houses"][index]["elderly"]) ;  workingPopulation = str(data["houses"][index]["workingPopulation"]) ; menPart = str(data["houses"][index]["menPart"]) ; womenPart = str(data["houses"][index]["womenPart"]) ; men = str(int(data["houses"][index]["men"])) ; women = str(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"]) ; lowerClassRate = str(data["houses"][index]["lowerClassRate"]) ;  upperClassRate = str(data["houses"][index]["upperClassRate"]) ; lowerClassTax = str(data["houses"][index]["lowerClassTax"]) ; middleClassTax = str(data["houses"][index]["middleClassTax"]) ; upperClassTax = str(data["houses"][index]["upperClassTax"]) ; lowerClass = str(data["houses"][index]["lowerClass"]) ;  middleClass = str(data["houses"][index]["middleClass"]) ; upperClass = str(data["houses"][index]["upperClass"]) ; army = str(data["houses"][index]["army"]) ; guildTax = str(data["houses"][index]["guildTax"]) ; vassalTax = str(data["houses"][index]["vassalTax"]) ; lordTax = str(data["houses"][index]["lordTax"]) ; income = str(data["houses"][index]["income"]) ;  expenses = str(data["houses"][index]["expenses"]) ; totalGold = str(data["houses"][index]["totalGold"]) ; knights = str(data["houses"][index]["knights"]) ; guards = str(data["houses"][index]["guards"]) ; squires = str(data["houses"][index]["squires"])
+                name = str(data["houses"][index]["name"]) ; population = str(data["houses"][index]["population"]) ; natality = str(data["houses"][index]["natality"]) ; childrenRate = str(data["houses"][index]["childrenRate"]) ; elderlyRate = str(data["houses"][index]["elderlyRate"]) ; mortality = str(data["houses"][index]["mortality"]) ; popularity = str(data["houses"][index]["popularity"]) ; children = str(data["houses"][index]["children"]) ; elderly = str(data["houses"][index]["elderly"]) ;  workingPopulation = str(data["houses"][index]["workingPopulation"]) ; menPart = str(data["houses"][index]["menPart"]) ; womenPart = str(data["houses"][index]["womenPart"]) ; men = str(int(data["houses"][index]["men"])) ; women = str(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"]) ; lowerClassRate = str(data["houses"][index]["lowerClassRate"]) ;  upperClassRate = str(data["houses"][index]["upperClassRate"]) ; lowerClassTax = str(data["houses"][index]["lowerClassTax"]) ; middleClassTax = str(data["houses"][index]["middleClassTax"]) ; upperClassTax = str(data["houses"][index]["upperClassTax"]) ; lowerClass = str(data["houses"][index]["lowerClass"]) ;  middleClass = str(data["houses"][index]["middleClass"]) ; upperClass = str(data["houses"][index]["upperClass"]) ; army = str(data["houses"][index]["army"]) ; guildTax = str(data["houses"][index]["guildTax"]) ; vassalTax = str(data["houses"][index]["vassalTax"]) ; lordTax = str(data["houses"][index]["lordTax"]) ; income = str(data["houses"][index]["income"]) ;  expenses = str(data["houses"][index]["expenses"]) ; totalGold = str(data["houses"][index]["totalGold"]) ; knights = str(data["houses"][index]["knights"]) ; guards = str(data["houses"][index]["guards"]) ; squires = str(data["houses"][index]["squires"]) ; nettoIncome = str(data["houses"][index]["nettoIncome"])
                 # Discord formatted information to return
                 print("checkpoint 3")
                 # This took some time ...
-                formattedInfo = str("\n```diff\n-        Population of " + name + ":\nTotal Population : " + population + "\nChildren : " + children + "\nElders : " + elderly + "\nWorking Population : " + workingPopulation + "\nMen : " + men + "\nWomen : " + women + "\nMiddle Class : " + middleClass + "\nUpper Class : " + upperClass + "\nPoor Class : " + lowerClass + "\nArmy : " + army + " men" + "\nGuards : " + guards + "\nKnights : " + knights + "\nSquires : " + squires + "\n\n\n-          Statistics" + "\nPopularity : " + str((float(popularity)*100)) + " percent" + "\nNatality : " + str((float(natality)*100)) + " percent" + "\nMortality : " + str((float(mortality)*100)) + " percent" + "\nchildren rate : " + str((float(childrenRate)*100)) + " percent" + "\nElders Rate : " + str((float(elderlyRate)*100)) + " percent" + "\nLower Class Rate : " + str((float(lowerClassRate)*100)) + " percent" + "\nUpper Class Rate : " + str((float(upperClassRate)*100)) + " percent" + "\nLower Class Tax : " + lowerClassTax + "\nMiddle Class Tax : " + middleClassTax + "\nUpper Class Tax: " + upperClassTax + "\n\n\n-          Economy" + "\nIncome : " + income + "\nExpenses : " + expenses + "\nTotal Gold : " + totalGold + "\n```")
+                formattedInfo = str("\n```diff\n-        Population of " + name + ":\nTotal Population : " + population + "\nChildren : " + children + "\nElders : " + elderly + "\nWorking Population : " + workingPopulation + "\nMen : " + men + "\nWomen : " + women + "\nMiddle Class : " + middleClass + "\nUpper Class : " + upperClass + "\nPoor Class : " + lowerClass + "\nArmy : " + army + " men" + "\nGuards : " + guards + "\nKnights : " + knights + "\nSquires : " + squires + "\n\n\n-          Statistics" + "\nPopularity : " + str((float(popularity)*100)) + " percent" + "\nNatality : " + str((float(natality)*100)) + " percent" + "\nMortality : " + str((float(mortality)*100)) + " percent" + "\nchildren rate : " + str((float(childrenRate)*100)) + " percent" + "\nElders Rate : " + str((float(elderlyRate)*100)) + " percent" + "\nLower Class Rate : " + str((float(lowerClassRate)*100)) + " percent" + "\nUpper Class Rate : " + str((float(upperClassRate)*100)) + " percent" + "\nLower Class Tax : " + lowerClassTax + "\nMiddle Class Tax : " + middleClassTax + "\nUpper Class Tax: " + upperClassTax + "\n\n\n-          Economy" + "\nRaw income : " + income + "\nExpenses :   " + expenses + "\nIncome :    " + nettoIncome + "\nTotal Gold : " + totalGold + "\n```")
                 print("done")
+                try:
+                    if data["houses"][index]["blocked"] == "true":
+                        formattedInfo = str("\n```diff\n-        Population of " + name + ":\nTotal Population : " + population + "\nChildren : " + children + "\nElders : " + elderly + "\nWorking Population : " + workingPopulation + "\nMen : " + men + "\nWomen : " + women + "\nMiddle Class : " + middleClass + "\nUpper Class : " + upperClass + "\nPoor Class : " + lowerClass + "\n- Army : BLOCKED (you are in debt)" + "\nGuards : " + guards + "\nKnights : " + knights + "\nSquires : " + squires + "\n\n\n-          Statistics" + "\nPopularity : " + str((float(popularity)*100)) + " percent" + "\nNatality : " + str((float(natality)*100)) + " percent" + "\nMortality : " + str((float(mortality)*100)) + " percent" + "\nchildren rate : " + str((float(childrenRate)*100)) + " percent" + "\nElders Rate : " + str((float(elderlyRate)*100)) + " percent" + "\nLower Class Rate : " + str((float(lowerClassRate)*100)) + " percent" + "\nUpper Class Rate : " + str((float(upperClassRate)*100)) + " percent" + "\nLower Class Tax : " + lowerClassTax + "\nMiddle Class Tax : " + middleClassTax + "\nUpper Class Tax: " + upperClassTax + "\n\n\n-          Economy" + "\nRaw income : " + income + "\nExpenses :   " + expenses + "\nIncome :    " + nettoIncome + "\nTotal Gold : " + totalGold + "\n```")
+                except:
+                    pass
+
                 return formattedInfo
 
             # yes this is supposed to be a LOOK at stats, but its also easier to use it to change guards for users
@@ -122,6 +128,7 @@ class house_database_handler:
             # guilds
             elif mode == "guilds":
                     index = self.find_index_in_db(data["guilds"], user)
+                    print(index)
                     name = str(data["guilds"][index]["name"]); owner = str(data["guilds"][index]["owner"]) ; location = str(data["guilds"][index]["location"]) ;  totalGold = str(data["guilds"][index]["totalGold"])
                     formattedInfo = str("\n```diff\n-        Stats of Guild of " + name + ":\nOwner : " + owner + "\nLocation : " + location + "\nTotal Gold : " + totalGold + "```")
                     return formattedInfo
@@ -284,7 +291,7 @@ class house_database_handler:
                 data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
                 data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["upperClass"] * data["houses"][index]["upperClassTax"]
                 if choice == "army":
-                    data["houses"][index]["expenese"] = amount * self.armySalary
+                    data["houses"][index]["expenses"] = amount * self.armySalary
 
         if mode == "players":
             print("Changing for ", houseRole)
@@ -294,7 +301,8 @@ class house_database_handler:
                 print(choice, amount)
                 # else, normal mode
                 print("Before Change : ", data["players"][index][choice])
-                data["players"][index][choice] = int(amount)
+                if choice != "name": amount = int(amount)
+                data["players"][index][choice] = amount
                 print("bruh")
         # finish, write, close
         self.overwrite_json_db(data)
@@ -304,7 +312,7 @@ class house_database_handler:
     def updateHouse(self, user=None, rates="rates.json"):
         if user == None: return "No user specified"
         user = user.lower()
-
+        debt = False
         # get user index
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
@@ -338,7 +346,8 @@ class house_database_handler:
             #lordTax = pass
             income = middleClass * data["houses"][index]["middleClassTax"] + lowerClass * data["houses"][index]["lowerClassTax"] + upperClass * data["houses"][index]["upperClassTax"]
             expenses = data["houses"][index]["army"] * self.armySalary + data["houses"][index]["knights"] * self.knightsSalary + data["houses"][index]["guards"] * self.guardsSalary + data["houses"][index]["squires"] * 0
-            totalGold = data["houses"][index]["totalGold"] + income - expenses
+            nettoIncome = data["houses"][index]["income"] - data["houses"][index]["expenses"]
+            totalGold = data["houses"][index]["totalGold"] + nettoIncome
 
             #data["houses"][index]["name"] = pass
             data["houses"][index]["population"] = newPopulation
@@ -372,6 +381,15 @@ class house_database_handler:
             print(data["houses"][index]["income"])
             data["houses"][index]["expenses"] = expenses
             data["houses"][index]["totalGold"] = totalGold
+            data["houses"][index]["nettoIncome"] = nettoIncome
+            print(nettoIncome)
+            if data["houses"][index]["totalGold"] < 0 :
+                data["houses"][index]["blocked"] = "true"
+                debt = True
+                data["houses"][index]["army"] = 0
+            else:
+                data["houses"][index]["blocked"] = "false"
+
             #data["houses"][index]["knights"] = knights
             #data["houses"][index]["guards"] = guards
             #data["houses"][index]["squires"] = squires
@@ -379,6 +397,8 @@ class house_database_handler:
             #overwrite old file
             self.overwrite_json_db(data)
             # nice, lets inform the user
+            if debt == True:
+                return r"/!\ Player is currently in debt. Army blocked."
             return "All went smooth. User has been updated"
 
     def updateAll(self):
@@ -401,7 +421,13 @@ class house_database_handler:
                     data["houses"][index]["upperClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["upperClassRate"])
                     data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
                     data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["upperClass"] * data["houses"][index]["upperClassTax"]
-                    data["houses"][index]["expenese"] = data["houses"][index]["army"] * self.armySalary
+                    print(data["houses"][index]["army"], self.armySalary)
+                    data["houses"][index]["expenses"] = int(data["houses"][index]["army"]) * self.armySalary
+                    data["houses"][index]["nettoIncome"] = data["houses"][index]["income"] - data["houses"][index]["expenses"]
+                    if data["houses"][index]["totalGold"] < 0:
+                        data["houses"][index]["blocked"] = "true"
+                    else:
+                        data["houses"][index]["blocked"] = "false"
 
             else:
                 index = self.find_index_in_db(data["houses"], house)
@@ -412,6 +438,7 @@ class house_database_handler:
                 data["houses"][index]["upperClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["upperClassRate"])
                 data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
                 data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["upperClass"] * data["houses"][index]["upperClassTax"]
-                data["houses"][index]["expenese"] = data["houses"][index]["army"] * self.armySalary
+                print(data["houses"][index]["army"], self.armySalary)
+                data["houses"][index]["expenses"] = int(data["houses"][index]["army"]) * self.armySalary
 
         self.overwrite_json_db(data)
