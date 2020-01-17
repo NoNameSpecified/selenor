@@ -3,6 +3,9 @@
         "income-tax-rate": 0.1,
         "guardsSalary": 15000,
         "knightsSalary": 15000,
-        "armySalary": 100
+        "armySalary": 100,
+        "lowerClassTaxMax" : 60,
+        "middleClassTaxMax" : 100,
+        "upperClassTaxMax" : 200
     }
 }
