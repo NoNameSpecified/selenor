@@ -1,5 +1,6 @@
 import json
 import os
+import random
 
 
 """
@@ -28,6 +29,9 @@ class house_database_handler:
         self.guardsSalary = rate["rates"]["guardsSalary"]
         self.knightsSalary = rate["rates"]["knightsSalary"]
         self.armySalary = rate["rates"]["armySalary"]
+        self.lowerClassTaxMax = rate["rates"]["lowerClassTaxMax"]
+        self.middleClassTaxMax = rate["rates"]["middleClassTaxMax"]
+        self.upperClassTaxMax = rate["rates"]["upperClassTaxMax"]
 
 
     def overwrite_json_db(self, content):
@@ -106,14 +110,12 @@ class house_database_handler:
                     personalValue = personalValue.lower()
                     if personalValue not in ["guards"]:
                         return "For now you can only change `guards`."
-                    if int(personalAmount) > 3:
-                        return "Maximum 3 guards. If you are lord and want more, ask staff specifically"
 
                     try:
                         data["players"][index][personalValue] = personalAmount
                         # finish, write, close
                         self.overwrite_json_db(data)
-
+                        self.recalculate_economy("all")
                         return "ok it worked"
                     except:
                         return "Nope, wrong value it seems"
@@ -145,6 +147,36 @@ class house_database_handler:
         with open(self.pathToJson, "r") as db:
             data = json.load(db) ; x = [data["guilds"][i]["name"] for i in range(len(data["guilds"]))] ; return x
 
+    def calculate_guards(self, house):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+            guards = 0
+            x = 0
+            for i in range(len(data["players"])):
+                if " "+house in data["players"][i]["name"]:
+                    x = x+1
+                    guards = guards + int(data["players"][i]["guards"])
+            return guards
+
+    def calculate_popularity(self, index):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+            middleTax = data["houses"][index]["middleClassTax"]
+            lowerTax = data["houses"][index]["lowerClassTax"]
+            upperTax = data["houses"][index]["upperClassTax"]
+            if middleTax > 70:
+                popularity = 5
+            elif middleTax > 51:
+                popularity = 20
+            elif middleTax > 31:
+                popularity = 50 - random.randint(0, 10)
+            elif middleTax > 21:
+                popularity = 60 - random.randint(0, 20)
+            elif middleTax > 11:
+                popularity = 70 - random.randint(0, 20)
+            else:
+                popularity = 80
+            return popularity / 100
 
     # create a player character
     def createUser(self, name, house, age, attack, counter, equipment, dexterity, assassinationCapacity, guards):
@@ -277,8 +309,8 @@ class house_database_handler:
                 # else, normal mode
                 print("Before Change : ", data["houses"][index][choice])
 
-                if (choice == "upperClassTax" and amount > 200) or (choice == "middleClassTax" and amount > 100) or (choice == "lowerClassTax" and amount > 60):
-                    return "`Too high taxes`"
+                if (choice == "upperClassTax" and amount > self.upperClassTaxMax) or (choice == "middleClassTax" and amount > self.middleClassTaxMax) or (choice == "lowerClassTax" and amount > self.lowerClassTaxMax):
+                    return "`Too high taxes ( " + str(self.upperClassTaxMax) + " max for upper class), ( " + str(self.middleClassTaxMax) + " max for middle class), ( " + str(self.lowerClassTaxMax) + " max for lower class),`"
 
                 if futureExpenses > data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"] :
                     return "```diff\n- Your future expenses would be higher as your income.\nThis is not possible to change over he bot.\nAsk the staff for major changes that come with debt.```"
@@ -291,7 +323,7 @@ class house_database_handler:
                 data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
                 data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["upperClass"] * data["houses"][index]["upperClassTax"]
                 if choice == "army":
-                    data["houses"][index]["expenses"] = amount * self.armySalary
+                    data["houses"][index]["expenses"] = amount * self.armySalary + data["houses"][index]["guards"] * self.guardsSalary
 
         if mode == "players":
             print("Changing for ", houseRole)
@@ -301,13 +333,32 @@ class house_database_handler:
                 print(choice, amount)
                 # else, normal mode
                 print("Before Change : ", data["players"][index][choice])
-                if choice != "name": amount = int(amount)
+                if choice != "name" and choice != "equipment": amount = int(amount)
                 data["players"][index][choice] = amount
                 print("bruh")
         # finish, write, close
         self.overwrite_json_db(data)
+        self.recalculate_economy("all")
         # inform user
         return "```\nYay ! It worked !```"
+
+
+    def updatePlayer(self, player):
+        # get user index
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+            try:
+                index = self.find_index_in_db(data["players"], user)
+            except:
+                return "User not found"
+            print(index)
+            if data["players"][index]["age"] > 16:
+                data["players"][index]["age"] = data["players"][index]["age"] + 1
+            else:
+                data["players"][index]["age"] = data["players"][index]["age"] + 2
+            self.overwrite_json_db(data)
+            return "done"
+
 
     def updateHouse(self, user=None, rates="rates.json"):
         if user == None: return "No user specified"
@@ -328,7 +379,6 @@ class house_database_handler:
             #natality = pass
             #mortality = pass
             newPopulation = data["houses"][index]["population"] + (data["houses"][index]["population"] * data["houses"][index]["natality"]) - (data["houses"][index]["population"] * data["houses"][index]["mortality"])
-
             #popularity = manualPopularity
 
             children, elderly = int(data["houses"][index]["population"] * data["houses"][index]["childrenRate"]), int(data["houses"][index]["population"] * data["houses"][index]["elderlyRate"])
@@ -336,10 +386,18 @@ class house_database_handler:
             men = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
             women = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
             #knights, guards, squires = 0, 0, 0
+            for index in range(len(data["houses"])):
+
+                house = data["houses"][index]["name"].split("_")[1]
+                print(house)
+                guards = self.calculate_guards(house)
+            data["houses"][index]["guards"] = guards
             lowerClass = int(workingPopulation * data["houses"][index]["lowerClassRate"])
             upperClass = int(workingPopulation * data["houses"][index]["upperClassRate"])
             middleClass = int(workingPopulation - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
 
+            natality = (data["houses"][index]["health"] / 100) * 5
+            mortality = 1 + (data["houses"][index]["health"] / 100)
 
             #guildTax = pass
             #vassalTax = pass
@@ -351,10 +409,10 @@ class house_database_handler:
 
             #data["houses"][index]["name"] = pass
             data["houses"][index]["population"] = newPopulation
-            #data["houses"][index]["natality"] = natality
+            data["houses"][index]["natality"] = natality / 100
             #data["houses"][index]["childrenRate"] = pass
             #data["houses"][index]["elderlyRate"] = pass
-            #data["houses"][index]["mortality"] = mortality
+            data["houses"][index]["mortality"] = mortality / 100
             #data["houses"][index]["popularity"] = pass
             data["houses"][index]["children"] = children
             data["houses"][index]["elderly"] = elderly
@@ -377,6 +435,10 @@ class house_database_handler:
             #data["houses"][index]["guildTax"] = pass
             #data["houses"][index]["vassalTax"] = pass
             #data["houses"][index]["lordTax"] = pass
+
+            popularity = self.calculate_popularity(house)
+            data["houses"][index]["popularity"] = popularity
+
             data["houses"][index]["income"] = income
             print(data["houses"][index]["income"])
             data["houses"][index]["expenses"] = expenses
@@ -405,6 +467,9 @@ class house_database_handler:
         x = self.listHouses()
         for house in x:
             self.updateHouse(house)
+        x = self.listPlayers()
+        for player in x:
+            self.updatePlayer(player)
         return "All users have been updated"
 
 
@@ -414,6 +479,11 @@ class house_database_handler:
             data = json.load(db)
             if house == "all":
                 for index in range(len(data["houses"])):
+
+                    house = data["houses"][index]["name"].split("_")[1]
+                    print(house)
+                    guards = self.calculate_guards(house)
+                    data["houses"][index]["guards"] = guards
                     data["houses"][index]["workingPopulation"] = int(data["houses"][index]["population"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
                     data["houses"][index]["men"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
                     data["houses"][index]["women"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
@@ -422,23 +492,27 @@ class house_database_handler:
                     data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
                     data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["upperClass"] * data["houses"][index]["upperClassTax"]
                     print(data["houses"][index]["army"], self.armySalary)
-                    data["houses"][index]["expenses"] = int(data["houses"][index]["army"]) * self.armySalary
+                    data["houses"][index]["expenses"] = int(data["houses"][index]["army"]) * self.armySalary + int(data["houses"][index]["guards"]) * self.guardsSalary
                     data["houses"][index]["nettoIncome"] = data["houses"][index]["income"] - data["houses"][index]["expenses"]
+                    popularity = self.calculate_popularity(index)
+                    data["houses"][index]["popularity"] = popularity
+
+
+                    lower = data["houses"][index]["upperClassTax"] / 200
+                    middle = data["houses"][index]["middleClassTax"] / 100
+                    upper = data["houses"][index]["lowerClassTax"] / 60
+                    print(lower, middle, upper)
+                    print(lower * random.randint(50,60) + middle *  random.randint(50,60) + upper *  random.randint(12,20))
+                    health = 100 - (lower * random.randint(50,60) + middle *  random.randint(50,60) + upper *  random.randint(12,20) )
+                    data["houses"][index]["health"] = health
+                    natality = (data["houses"][index]["health"] / 100) * 5
+                    mortality = 1 + (data["houses"][index]["health"] / 100)
+                    data["houses"][index]["natality"] = natality / 100
+                    data["houses"][index]["mortality"] = mortality / 100
+
                     if data["houses"][index]["totalGold"] < 0:
                         data["houses"][index]["blocked"] = "true"
                     else:
                         data["houses"][index]["blocked"] = "false"
-
-            else:
-                index = self.find_index_in_db(data["houses"], house)
-                data["houses"][index]["workingPopulation"] = int(data["houses"][index]["population"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
-                data["houses"][index]["men"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
-                data["houses"][index]["women"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
-                data["houses"][index]["lowerClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["lowerClassRate"])
-                data["houses"][index]["upperClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["upperClassRate"])
-                data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
-                data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["upperClass"] * data["houses"][index]["upperClassTax"]
-                print(data["houses"][index]["army"], self.armySalary)
-                data["houses"][index]["expenses"] = int(data["houses"][index]["army"]) * self.armySalary
 
         self.overwrite_json_db(data)
