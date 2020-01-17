@@ -55,7 +55,8 @@ decrypted = decrypt(encryptedToken, password)
 
 # init json handling and discord
 db = house_database_handler()
-staffMembers = ["Kendrik", "Faerix", "TheFlightEnthousiast"]
+# wow the first staff guy seems really cool, hes probably the best staff, read all the rules and all
+staffMembers = ["Kendrik", "Faerix", "TheFlightEnthousiast", "birb", "sad!"]
 powerRoles = ["lady", "lord", "mayor", "king", "hand", "house leader"]
 BOT_PREFIX = ("\\")
 # Oof close your eyes please !
@@ -69,12 +70,22 @@ client = Bot(command_prefix=BOT_PREFIX)
 
 """
 
+double_house = {
+    "house_berg": "house_cilderhurs",
+    "house_gar": "house_dragonovic",
+    "house_lancaster": "royal_administration"
+}
+
+# hello there
+@client.command("listStaff", brief="list staff allowed usery")
+async def listStaff(ctx):
+    await ctx.send(staffMembers)
 
 # ~~~ er nothing to see here ! move on ~~~
 @client.command("gFuel", pass_context=True, brief="nothing to see here", aliases=['69'])
 async def listHouse(ctx):
-    if (ctx.message.author.name == "MUNKIE🐒🍑" or ctx.message.author.name == "Kendrik") and ctx.channel.name == "munkie-gang":
-        await ctx.send("MUNKIE🐒🍑 is the pengest ever -PArAnoiD 2020")
+    if (ctx.message.author.name == "birb" or ctx.message.author.name == "Kendrik") and ctx.channel.name == "munkie-gang":
+        await ctx.send("@birb#1435 is the pengest ever -PArAnoiD 2020")
 
 # ~~~ set custom status ~~~
 @client.event
@@ -118,7 +129,7 @@ async def listUser(ctx):
 
 
 # ~~~ recalculate the economy without updating population etc ~~~
-@client.command("recalibrate", pass_context=True)
+@client.command("recalibrate", pass_context=True, aliases=["fuck"])
 async def population(ctx):
     db.recalculate_economy("all")
     await ctx.send("ok")
@@ -133,9 +144,15 @@ async def population(ctx, member="error"):
         if memberRoles[i].lower().startswith("house_"):
             print("ha, gotcha")
             member = memberRoles[i].lower()
-    # if he has house role and royal administration -> prefer royal
-    if "royal_administration" in memberRoles:
-        member = "royal_administration"
+    try:
+        if double_house[member]:
+            print(double_house[member])
+            await ctx.send("First for " + str(double_house[member]))
+            info = db.lookFor(double_house[member])
+            await ctx.send(info)
+    except:
+        pass
+
     # by default return an error, this is just when staff calls command without precising
     if member == "error":
         await ctx.send("```diff\n- Enter a name too```")
@@ -155,15 +172,41 @@ async def population(ctx, member="error"):
 async def population(ctx, mode="normal", value = None, amount = None):
     member = ctx.message.author.display_name
     member = member.lower().strip()
+    memberRoles = [y.name.lower() for y in ctx.message.author.roles]
+    try:
+        # check if allowed
+        for i in range(len(powerRoles)):
+            if powerRoles[i] in ctx.message.author.display_name or "king" in ctx.message.author.display_name:
+                power = 1
+        for i in range(len(memberRoles)):
+            if powerRoles[i] in memberRoles[i].lower() or memberRoles[i].lower() == "house leader":
+                print("seems like he is powerful person")
+                checkMember = memberRoles[i].lower()
+                power = 1
+    except:
+        pass
+
     print("looking for ", member)
+    print(amount)
     # can change with same command
     if mode == "change" and value != None and amount != None:
+        if int(amount) > 3:
+            try:
+                print(power)
+                if int(amount) > 5:
+                    await ctx.send("Max 5 guards")
+                    return 1
+            except:
+                await ctx.send("Max 3 guards.")
+                return 1
+
         await ctx.send("```diff\nSure [y/N]```")
         answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
         yOrNo = answer.content.lower()
         if yOrNo != "y" and yOrNo != "yes":
             await ctx.send("```\nabort```")
             return 1
+        amount = int(amount)
         info = db.lookFor(member, "personal", mode, value, amount)
         await ctx.send(info)
     info = db.lookFor(member, "personal", mode, None, None)
@@ -186,7 +229,7 @@ async def population(ctx, guild="error"):
             print(memberRole)
 
     if ctx.message.author.name in staffMembers:
-        member == guild
+        member = guild
     if member == "error":
         await ctx.send("Give guild to look for")
         return 1
@@ -198,7 +241,7 @@ async def population(ctx, guild="error"):
 
 # ~~~ houses can send gold to a house or to a guild ~~~
 @client.command("send", pass_context=True, aliases=["pay"], brief="send money to house / guild")
-async def singleChange(ctx, moneyReceiver="error", amount="error"):
+async def sendCash(ctx, moneyReceiver="error", amount="error"):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
 
     # check if allowed (only house leader)
@@ -206,7 +249,7 @@ async def singleChange(ctx, moneyReceiver="error", amount="error"):
         if powerRoles[i] in ctx.message.author.display_name:
             power = 1
     for i in range(len(memberRoles)):
-        if powerRoles[i] in memberRoles[i].lower() or memberRoles[i].lower() == "house leader":
+        if memberRoles[i].lower() == "house leader" or memberRoles[i].lower() == "royal_administration":
             print("seems like he is powerful person")
             member = memberRoles[i].lower()
             power = 1
@@ -218,9 +261,14 @@ async def singleChange(ctx, moneyReceiver="error", amount="error"):
     # passed test so lets go
     # automatically get house of user
     for i in range(len(memberRoles)):
+        if memberRoles[i].lower().startswith("royal_"):
+            print("ha, gotcha")
+            moneySender = memberRoles[i].lower()
+            break
         if memberRoles[i].lower().startswith("house_"):
             print("ha, gotcha")
             moneySender = memberRoles[i].lower()
+            break
     if moneySender == "error" or moneyReceiver == "error" or amount == "error":
         await ctx.send("```diff\n- Error - use the command as\n\\send TO AMOUNT```")
     x = db.listHouses()
@@ -273,14 +321,26 @@ async def singleChange(ctx):
     print(memberRoles)
     ARMY_SALARY = 100
 
-    # automatically get role of user (still privilegate royal_administration)
-    if "royal_administration" in memberRoles:
-        houseRole = "royal_administration"
-    else:
-        for i in range(len(memberRoles)):
-            if memberRoles[i].lower().startswith("house_"):
-                print("ha, gotcha")
-                houseRole = memberRoles[i].lower()
+    # automatically get role of user
+    for i in range(len(memberRoles)):
+        if memberRoles[i].lower().startswith("house_"):
+            print("ha, gotcha")
+            houseRole = memberRoles[i].lower()
+    try:
+        if double_house[houseRole]:
+            print(double_house[houseRole])
+            await ctx.send("```diff\n- Change values for "+ str(houseRole) + " or " + str(double_house[houseRole]) + " [1/2] :```")
+            sleep(0.1)
+            houseChoice = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+            houseChoice = houseChoice.content.lower().strip()
+            if houseChoice != "1" and houseChoice != "2":
+                await ctx.send("```\nAborted.```")
+                return 1
+            elif houseChoice == "2":
+                houseRole = double_house[houseRole]
+    except:
+        pass
+
     await ctx.send("```diff\n- Are you sure you want to change values for "+ str(houseRole) + " [y/N] :```")
     sleep(0.1)
     answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
@@ -458,7 +518,7 @@ async def singleStaffChange(ctx):
     await ctx.send("```diff\nNew Value : ```")
     sleep(0.1)
     answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    if choice != "name": amount = float(answer.content.lower().strip())
+    if choice != "name" and choice!= "equipment": amount = float(answer.content.lower().strip())
     else: amount = str(answer.content.lower().strip())
     #  check again
     await ctx.send("```diff\nSure [y/N]```")
