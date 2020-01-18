@@ -6,7 +6,7 @@ from time import sleep
 
 
 
-# --------- Info and general informations, and the token encryption thing -----------
+# --------- Info and general informations, and the token encryption thing, bot code below -----------
 
 
 
@@ -19,6 +19,8 @@ INFO :
     the discord things (ctx module and all) are from the discord API (import discord)
 
     the database handler is from db/__init__.py
+    
+    mind :: the code seems long, mainly because there are a lot of comments and also some functions as init_house that take many lines
 
 CURRENT TODO :
 
