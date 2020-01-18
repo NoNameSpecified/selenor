@@ -11,7 +11,9 @@ import random
 """
 
 
-
+# actually the name isnt right,
+# first it was suppsoed to handle houses, then another one the players etc..
+# but that would be overkill, so lets go with the messy version !
 class house_database_handler:
     def __init__(self, pathToJson="database.json"):
         self.pathToJson = pathToJson
@@ -25,6 +27,8 @@ class house_database_handler:
         except:
             pass # and fuck it
         rates_file = open("rates.json", "r")
+
+        # these are the rates that are used everywhere, and wont be changed normally
         rate = json.load(rates_file)
         self.guardsSalary = rate["rates"]["guardsSalary"]
         self.knightsSalary = rate["rates"]["knightsSalary"]
@@ -33,20 +37,61 @@ class house_database_handler:
         self.middleClassTaxMax = rate["rates"]["middleClassTaxMax"]
         self.upperClassTaxMax = rate["rates"]["upperClassTaxMax"]
 
-
+    # used after changing the json, to overwrite the database
     def overwrite_json_db(self, content):
         self.json_db = open(self.pathToJson, "w")
         self.perfectionJson = json.dumps(content, indent=4, separators=(',', ': '))
         self.json_db.write(self.perfectionJson)
         self.json_db.close()
 
+    # houses are only marked with nametags, from which we must find the correct index
     def find_index_in_db(self, dataToFindIn, userNameToFind):
         for i in range(len(dataToFindIn)):
             print(userNameToFind)
             if dataToFindIn[i]["name"].lower() == userNameToFind.lower():
-                return i
+                return int(i)
         # as we return a string the program will abort
         return "nope"
+
+    # to get a list with all users.
+    # can be used either for the user, or in this module
+    def listHouses(self):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db) ; x = [data["houses"][i]["name"] for i in range(len(data["houses"]))] ; return x
+    def listUsers(self):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db) ; x = [data["players"][i]["name"] for i in range(len(data["players"]))] ; return x
+    def listGuilds(self):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db) ; x = [data["guilds"][i]["name"] for i in range(len(data["guilds"]))] ; return x
+
+    # merge two houses, e.g if one took over the other
+    def mergeHouses(self, houseFrom, houseTo):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+            print(houseFrom, houseTo)
+            indexFrom = self.find_index_in_db(data["houses"], houseFrom)
+            indexTo = self.find_index_in_db(data["houses"], houseTo)
+            # give population and gold.
+            # the other values will be recalculated
+            print(indexTo, indexFrom)
+            data["houses"][indexTo]["population"] = int(data["houses"][indexTo]["population"]) + int(data["houses"][indexFrom]["population"])
+            data["houses"][indexTo]["totalGold"] = int(data["houses"][indexTo]["totalGold"]) + int(data["houses"][indexFrom]["totalGold"])
+            # mark as inactive in the db, dont delete it (coz u never know)
+            data["houses"][indexFrom]["active"] = "False"
+            self.overwrite_json_db(data)
+        return "Merged."
+
+    # uses below function, updates all houses by looping through them
+    def updateAll(self):
+        x = self.listHouses()
+        for house in x:
+            self.updateHouse(house)
+        x = self.listPlayers()
+        for player in x:
+            self.updatePlayer(player)
+        return "All users have been updated"
+
 
     # pay from house to house
     def sendMoney(self, sender, receiver, amount, mode):
@@ -99,13 +144,15 @@ class house_database_handler:
                     if data["houses"][index]["blocked"] == "true":
                         formattedInfo = str("\n```diff\n-        Population of " + name + ":\nTotal Population : " + population + "\nChildren : " + children + "\nElders : " + elderly + "\nWorking Population : " + workingPopulation + "\nMen : " + men + "\nWomen : " + women + "\nMiddle Class : " + middleClass + "\nUpper Class : " + upperClass + "\nPoor Class : " + lowerClass + "\n- Army : BLOCKED (you are in debt)" + "\nGuards : " + guards + "\nKnights : " + knights + "\nSquires : " + squires + "\n\n\n-          Statistics" + "\nPopularity : " + str((float(popularity)*100)) + " percent" + "\nNatality : " + str((float(natality)*100)) + " percent" + "\nMortality : " + str((float(mortality)*100)) + " percent" + "\nchildren rate : " + str((float(childrenRate)*100)) + " percent" + "\nElders Rate : " + str((float(elderlyRate)*100)) + " percent" + "\nLower Class Rate : " + str((float(lowerClassRate)*100)) + " percent" + "\nUpper Class Rate : " + str((float(upperClassRate)*100)) + " percent" + "\nLower Class Tax : " + lowerClassTax + "\nMiddle Class Tax : " + middleClassTax + "\nUpper Class Tax: " + upperClassTax + "\n\n\n-          Economy" + "\nRaw income : " + income + "\nExpenses :   " + expenses + "\nIncome :    " + nettoIncome + "\nTotal Gold : " + totalGold + "\n```")
                 except:
-                    pass
+                    pass # hm
 
                 return formattedInfo
 
             # yes this is supposed to be a LOOK at stats, but its also easier to use it to change guards for users
             elif mode == "personal":
                 index = self.find_index_in_db(data["players"], user)
+
+                # is used with "\me change guards X"
                 if personalMode == "change" and personalValue != None and personalAmount != None:
                     personalValue = personalValue.lower()
                     if personalValue not in ["guards"]:
@@ -119,15 +166,15 @@ class house_database_handler:
                         return "ok it worked"
                     except:
                         return "Nope, wrong value it seems"
-                        {'name': 'mistress adelaide s airgetlam', 'house': 'house_airgetlam', 'age': 12, 'attackStats': 0, 'counterStats': 0, 'equipment': 'unarmed', 'dexterity': 0, 'assassinationCapacity': 0, 'guards': '3'}
 
+                # just show the stats
                 else:
                     name = str(data["players"][index]["name"]); house = str(data["players"][index]["house"]) ; age = str(data["players"][index]["age"]) ;  attackStats = str(data["players"][index]["attackStats"]) ;  dexterity = str(data["players"][index]["dexterity"]) ; counterStats = str(data["players"][index]["counterStats"]) ; equipment = str(data["players"][index]["equipment"]) ; assassinationCapacity = str(data["players"][index]["assassinationCapacity"]) ; guards = str(data["players"][index]["guards"])
                     formattedInfo = str("\n```diff\n-        Stats of Player : " + name + ":\nhouse : " + house + "\nAge : " + age + "\nattackStats : " + attackStats + "\ncounterStats : " + counterStats + "\nequipment : " + equipment + "\ndexterity: " + dexterity + "\nassassinationCapacity : " + assassinationCapacity + "\nguards : " + guards + "```")
 
                     return formattedInfo
 
-            # guilds
+            # guild information
             elif mode == "guilds":
                     index = self.find_index_in_db(data["guilds"], user)
                     print(index)
@@ -135,18 +182,7 @@ class house_database_handler:
                     formattedInfo = str("\n```diff\n-        Stats of Guild of " + name + ":\nOwner : " + owner + "\nLocation : " + location + "\nTotal Gold : " + totalGold + "```")
                     return formattedInfo
 
-    # to get a list with all users.
-    # can be used either for the user, or in this module
-    def listHouses(self):
-        with open(self.pathToJson, "r") as db:
-            data = json.load(db) ; x = [data["houses"][i]["name"] for i in range(len(data["houses"]))] ; return x
-    def listUsers(self):
-        with open(self.pathToJson, "r") as db:
-            data = json.load(db) ; x = [data["players"][i]["name"] for i in range(len(data["players"]))] ; return x
-    def listGuilds(self):
-        with open(self.pathToJson, "r") as db:
-            data = json.load(db) ; x = [data["guilds"][i]["name"] for i in range(len(data["guilds"]))] ; return x
-
+    # automatically fetch all guards of a house combined.
     def calculate_guards(self, house):
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
@@ -158,6 +194,7 @@ class house_database_handler:
                     guards = guards + int(data["players"][i]["guards"])
             return guards
 
+    # recalculate the popularity of a house
     def calculate_popularity(self, index):
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
@@ -342,7 +379,7 @@ class house_database_handler:
         # inform user
         return "```\nYay ! It worked !```"
 
-
+    # update their age and stuff
     def updatePlayer(self, player):
         # get user index
         with open(self.pathToJson, "r") as db:
@@ -359,7 +396,7 @@ class house_database_handler:
             self.overwrite_json_db(data)
             return "done"
 
-
+    # this could be optimized
     def updateHouse(self, user=None, rates="rates.json"):
         if user == None: return "No user specified"
         user = user.lower()
@@ -462,16 +499,6 @@ class house_database_handler:
             if debt == True:
                 return r"/!\ Player is currently in debt. Army blocked."
             return "All went smooth. User has been updated"
-
-    def updateAll(self):
-        x = self.listHouses()
-        for house in x:
-            self.updateHouse(house)
-        x = self.listPlayers()
-        for player in x:
-            self.updatePlayer(player)
-        return "All users have been updated"
-
 
 
     def recalculate_economy(self, house):
