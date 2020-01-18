@@ -1,1 +1,64 @@
-(nothing in here but normally this would be the data file)
+/!\ this is not any actual value, as this is open repo, just to show what the values and database look like
+
+{
+    "houses": [
+            {
+                "name": "foo_house",
+                "population": some value,
+                "natality": some value,
+                "childrenRate": some value,
+                "elderlyRate": some value,
+                "mortality": some value,
+                "popularity": some value,
+                "children": some value,
+                "elderly": some value,
+                "workingPopulation": some value,
+                "menPart": some value,
+                "womenPart": some value,
+                "men": some value,
+                "lowerClassRate": some value,
+                "upperClassRate": some value,
+                "lowerClassTax": some value,
+                "middleClassTax": some value,
+                "upperClassTax": some value,
+                "lowerClass": some value,
+                "middleClass": some value,
+                "upperClass": some value,
+                "army": some value,
+                "guildTax": some value,
+                "vassalTax": some value,
+                "lordTax": some value,
+                "income": some value,
+                "expenses": some value,
+                "totalGold": some value,
+                "knights": some value,
+                "guards": some value,
+                "squires": some value,
+                "women": some value,
+                "nettoIncome": some value,
+                "blocked": some value,
+                "health": some value
+                    }
+      ],
+    "players": [
+        {
+            "name": "Foo player nickname",
+            "house": "house_foo",
+            "age": 30,
+            "attackStats": 6,
+            "counterStats": 10,
+            "equipment": "Unarmed",
+            "dexterity": 10,
+            "assassinationCapacity": 10,
+            "guards": 0
+        }
+      ],
+    "guilds": [
+        {
+            "name": "assassins",
+            "owner": "Some Nickname",
+            "location": "othana",
+            "totalGold": somevalue
+        }
+  ]
+}
