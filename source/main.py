@@ -1,7 +1,14 @@
 import random, discord
 from discord.ext.commands import Bot
+# custom database handler
 from db import *
 from time import sleep
+
+
+
+# --------- Info and general informations, and the token encryption thing -----------
+
+
 
 """
 INFO :
@@ -12,6 +19,10 @@ INFO :
     the discord things (ctx module and all) are from the discord API (import discord)
 
     the database handler is from db/__init__.py
+
+CURRENT TODO :
+
+    - get to use asynchronous functions for example to check if staff, to check if house leader etc...
 
 """
 
@@ -43,7 +54,9 @@ def decrypt(enc, password):
 decrypted = decrypt(encryptedToken, password)
 
 
+
 # --------- BOT CODE BELOW -----------
+
 
 
 """
@@ -70,6 +83,8 @@ client = Bot(command_prefix=BOT_PREFIX)
 
 """
 
+# when a house controls another one, but didnt merge with it
+# below for example at "change", they will be able to choose which house they want to change values for
 double_house = {
     "house_berg": "house_cilderhurs",
     "house_gar": "house_dragonovic",
@@ -80,12 +95,6 @@ double_house = {
 @client.command("listStaff", brief="list staff allowed usery")
 async def listStaff(ctx):
     await ctx.send(staffMembers)
-
-# ~~~ er nothing to see here ! move on ~~~
-@client.command("gFuel", pass_context=True, brief="nothing to see here", aliases=['69'])
-async def listHouse(ctx):
-    if (ctx.message.author.name == "birb" or ctx.message.author.name == "Kendrik") and ctx.channel.name == "munkie-gang":
-        await ctx.send("@birb#1435 is the pengest ever -PArAnoiD 2020")
 
 # ~~~ set custom status ~~~
 @client.event
@@ -128,13 +137,14 @@ async def listUser(ctx):
 """
 
 
-# ~~~ recalculate the economy without updating population etc ~~~
+# ~~~ recalculate the economy without whole update (see below) which will update the population etc too ~~~
+# this could theoritically be removed now
 @client.command("recalibrate", pass_context=True, aliases=["fuck"])
 async def population(ctx):
     db.recalculate_economy("all")
     await ctx.send("ok")
 
-# ~~~ "\stats" to get information about input house ; "\stats" house_xyz for admin ~~~
+# ~~~ "\stats" to get information about client house ; "\stats" house_xyz for admin ~~~
 @client.command("stats", pass_context=True, aliases=["population"], brief="information about your population")
 async def population(ctx, member="error"):
     # automatically get role of user
@@ -167,7 +177,7 @@ async def population(ctx, member="error"):
     await ctx.send(info)
 
 
-# ~~~ get character info ONLY for users NOT STAFF ~~~
+# ~~~ get character info ONLY for users NOT STAFF - staff uses the "\user user nickname" ~~~
 @client.command("me", pass_context=True, aliases=["personal"], brief="information about your character")
 async def population(ctx, mode="normal", value = None, amount = None):
     member = ctx.message.author.display_name
@@ -213,7 +223,7 @@ async def population(ctx, mode="normal", value = None, amount = None):
     await ctx.send(str(info))
 
 
-# ~~~ get information about the population of yourself ~~~
+# ~~~ get information about your guild if you got one ~~~
 @client.command("guild", pass_context=True, aliases=["guildInfo"], brief="information about your guild")
 async def population(ctx, guild="error"):
     # look into first function where we use memberRoles to understand
@@ -293,7 +303,7 @@ async def sendCash(ctx, moneyReceiver="error", amount="error"):
         await ctx.send("`Error.`")
 
 
-# ~~~ update specific stuff ~~~
+# ~~~ update specific stuff, only house leaders tho ~~~
 @client.command("change", pass_context=True, aliases=["noOneWillUseThisAliasDummy"], brief="house leader can change taxes and army")
 async def singleChange(ctx):
     """
@@ -319,7 +329,7 @@ async def singleChange(ctx):
         pass
 
     print(memberRoles)
-    ARMY_SALARY = 100
+    ARMY_SALARY = 100 # useless, obsolete ? maybe..
 
     # automatically get role of user
     for i in range(len(memberRoles)):
@@ -722,8 +732,8 @@ async def initHouse(ctx):
     else:
         await ctx.send("aborted")
 
-# ~~~  ~~~
-@client.command("user", pass_context=True, brief="get user info",  aliases=['staff only'])
+# ~~~ see user stats  ~~~
+@client.command("user", pass_context=True, brief="get user info",  aliases=['player'])
 async def showMe(ctx, *, member="error"):
     print(member)
     if ctx.message.author.name in staffMembers:
@@ -738,6 +748,30 @@ async def showMe(ctx, *, member="error"):
 
     info = db.lookFor(member, "personal", "normale", None, None)
     await ctx.send(str(info))
+
+# ~~~ see user stats  ~~~
+@client.command("merge", pass_context=True, brief="merge two houses (staff only)",  aliases=['fusion'])
+async def showMe(ctx, houseFrom = "error", houseTo = "error"):
+    print("making an offer,,, they cannot refuse.")
+    if ctx.message.author.name not in staffMembers:
+        await ctx.send("nope.")
+        return 0
+    if houseFrom == "error" or houseTo == "error":
+        await ctx.send("use as : \\merge house_from house_to")
+        return 0
+
+    # you wont be able to come back..
+    await ctx.send("```diff\n- Merge "  + str(houseFrom) + " with " + str(houseTo) + " ?\nthis will **permanently** delete " + str(houseFrom) + ". [y/N]```")
+    askHim = await client.wait_for('message')
+    print(askHim.content)
+    if askHim.content.lower().strip() == "yes" or askHim.content.lower().strip() == "y":
+        # a soul for a soul..
+        returned = db.mergeHouses(houseFrom, houseTo)
+        await ctx.send(returned)
+        await ctx.send("seems like everything turned out ok.")
+    else:
+        await ctx.send("aborted")
+
 
 
 
@@ -758,13 +792,17 @@ async def showMe(ctx, *, member="error"):
 """
 
 
-
-
-""" (yes i use multi line AND one line comment)
-# all set up ! we can go !
 """
+
+logbook of the captain : currently listening to nirvana, mtv unplugged
+'oh but why you include that in here ?'
+well its the end of the code so im free !
+
+"""
+
 
 # RUN RUN RUN RUN - I CAN BE A BACKPACK WHILE YOU JUMP (seagulls - stop it now !)
 print("Starting bot")
 client.run(token)
 # tada ! line 709 at 11.01.20 lmao
+# bruh, 789 now at 18.01.20
