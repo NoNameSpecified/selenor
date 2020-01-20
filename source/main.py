@@ -6,7 +6,7 @@ from time import sleep
 
 
 
-# --------- Info and general informations, and the token encryption thing, bot code below -----------
+# --------- Info and general informations, and the token encryption thing -----------
 
 
 
@@ -19,8 +19,6 @@ INFO :
     the discord things (ctx module and all) are from the discord API (import discord)
 
     the database handler is from db/__init__.py
-    
-    mind :: the code seems long, mainly because there are a lot of comments and also some functions as init_house that take many lines
 
 CURRENT TODO :
 
@@ -97,6 +95,12 @@ double_house = {
 @client.command("listStaff", brief="list staff allowed usery")
 async def listStaff(ctx):
     await ctx.send(staffMembers)
+
+# ~~~ er nothing to see here ! move on ~~~
+@client.command("gFuel", pass_context=True, brief="nothing to see here", aliases=['69'])
+async def listHouse(ctx):
+    if (ctx.message.author.name == "birb" or ctx.message.author.name == "Kendrik") and ctx.channel.name == "munkie-gang":
+        await ctx.send("@birb#1435 is the pengest ever -PArAnoiD 2020")
 
 # ~~~ set custom status ~~~
 @client.event
