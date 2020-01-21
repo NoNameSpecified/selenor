@@ -135,6 +135,12 @@ async def listUser(ctx):
     except:
         await ctx.send("Internal Error. Call Admin")
 
+# ~~~ list houses ~~~
+@client.command("listItems", pass_context=True, brief="List items for your house", aliases=['items', 'list4'])
+async def listItems(ctx):
+    x = db.listItems()
+    await ctx.send("Here are the available items : " + str(x))
+    return 0
 
 """
 
@@ -149,6 +155,39 @@ async def listUser(ctx):
 async def population(ctx):
     db.recalculate_economy("all")
     await ctx.send("ok")
+
+# ~~~ buy some things in the shop ~~~
+@client.command("buy", pass_context=True, aliases=["buyItems", "shop"])
+async def buy(ctx, item = None, amount = None):
+    # automatically get role of user
+    memberRoles = [y.name.lower() for y in ctx.message.author.roles]
+    # try to get automatically the house of caller
+    for i in range(len(memberRoles)):
+        if memberRoles[i].lower().startswith("house_"):
+            print("ha, gotcha")
+            member = memberRoles[i].lower()
+    if "house leader" not in memberRoles:
+        await ctx.send("Restricted access.")
+        return 0
+    # if he doesnt specify, just list items
+    if item == None:
+        x = db.listItems()
+        await ctx.send("Here are the available items : \n" + str(x))
+        return 0
+    # he can buy more, but first, lets go with 1 by default
+    if item != None and amount == None:
+        amount = 1
+
+    request = db.buyItem(member, item, amount, "info")
+    await ctx.send(request)
+    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+    yOrNo = answer.content.lower()
+    if yOrNo != "y" and yOrNo != "yes":
+        await ctx.send("```\nabort```")
+        return 1
+
+    tryOrFail = db.buyItem(member, item, amount, "normal")
+    await ctx.send(tryOrFail)
 
 # ~~~ "\stats" to get information about client house ; "\stats" house_xyz for admin ~~~
 @client.command("stats", pass_context=True, aliases=["population"], brief="information about your population")
