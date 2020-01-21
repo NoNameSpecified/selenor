@@ -36,7 +36,26 @@ class house_database_handler:
         self.lowerClassTaxMax = rate["rates"]["lowerClassTaxMax"]
         self.middleClassTaxMax = rate["rates"]["middleClassTaxMax"]
         self.upperClassTaxMax = rate["rates"]["upperClassTaxMax"]
-        self.lordTax = 0
+        self.lordTax = 0.18
+        # shop, also in rates.json
+        self.port = rate["shop"]["port"]
+        self.city = rate["shop"]["city"]
+        self.boat = rate["shop"]["boat"]
+        self.road = rate["shop"]["road"]
+        self.bridge = rate["shop"]["bridge"]
+        self.temple = rate["shop"]["temple"]
+        self.school = rate["shop"]["school"]
+
+        self.shop = {
+            "port": self.port,
+            "city": self.city,
+            "boat": self.boat,
+            "road": self.road,
+            "bridge": self.bridge,
+            "temple": self.temple,
+            "school": self.school
+        }
+
 
     # used after changing the json, to overwrite the database
     def overwrite_json_db(self, content):
@@ -68,6 +87,9 @@ class house_database_handler:
     def listGuilds(self):
         with open(self.pathToJson, "r") as db:
             data = json.load(db) ; x = [data["guilds"][i]["name"] for i in range(len(data["guilds"]))] ; return x
+    def listItems(self):
+        with open("rates.json", "r") as db:
+            data = json.load(db) ; data = data["shop"] ; x = [key for key, value in data.items()] ; return x
 
     # merge two houses, e.g if one took over the other
     def mergeHouses(self, houseFrom, houseTo):
@@ -124,6 +146,36 @@ class house_database_handler:
             self.overwrite_json_db(data)
             return "`Sent the CA$H`"
 
+
+    #  houses can buy stuff
+    def buyItem(self, house, item, amount, mode="normal"):
+        with open(self.pathToJson, "r") as db:
+            amount = int(amount)
+            data = json.load(db)
+            houseName = house
+            house = self.find_index_in_db(data["houses"], house)
+
+            items = self.listItems()
+            if item not in items:
+                return "```Error. Did not found item (list items with \\buy)```"
+            if amount > 10:
+                return "`wtf, not so much at once..`"
+
+            try:
+                price = self.shop[item]
+            except:
+                return "```Error. Did not found item (list items with \\buy)```"
+
+            totalPrice = price * amount
+
+            if mode == "info":
+                return "`Buying " + str(amount) + " " + str(item) + " for " + str(totalPrice) + " goldpieces ? [y/N]`"
+            elif mode == "normal":
+                # take money
+                data["houses"][house]["totalGold"] = data["houses"][house]["totalGold"] - totalPrice
+                # finish, write, close
+                self.overwrite_json_db(data)
+                return "`House " + str(houseName) + " bought " + str(amount) + " " + str(item) + " for " + str(totalPrice) + " goldpieces.` <@404394261254242306>"
 
     # look for a specific user, then show its specifications
     def lookFor(self, user, mode="house", personalMode = "normal", personalValue = None, personalAmount = None):
