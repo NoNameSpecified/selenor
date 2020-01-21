@@ -7,5 +7,15 @@
         "lowerClassTaxMax" : 60,
         "middleClassTaxMax" : 100,
         "upperClassTaxMax" : 200
+    },
+
+    "shop": {
+      "port": 20000000,
+      "city": 5000000,
+      "boat": 5000,
+      "road": 2000,
+      "bridge": 500000,
+      "temple": 500000,
+      "school": 400000
     }
 }
