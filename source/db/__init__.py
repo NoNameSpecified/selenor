@@ -36,7 +36,7 @@ class house_database_handler:
         self.lowerClassTaxMax = rate["rates"]["lowerClassTaxMax"]
         self.middleClassTaxMax = rate["rates"]["middleClassTaxMax"]
         self.upperClassTaxMax = rate["rates"]["upperClassTaxMax"]
-        self.lordTax = 0.18
+        self.houseTax = rate["rates"]["queen-fucking-high-taxes"]
         # shop, also in rates.json
         self.port = rate["shop"]["port"]
         self.city = rate["shop"]["city"]
@@ -113,12 +113,13 @@ class house_database_handler:
         x = self.listHouses()
         for house in x:
             self.updateHouse(house)
-            #self.sendMoney(house, "royal_administration", self.lordTax, "houses")
+            self.taxes(house, "royal_administration")
         print("\n\n\nFINISHED HOUSES\n\n\n")
         x = self.listUsers()
         for player in x:
             self.updatePlayer(player)
         print("\n\n\nFINISHED PLAYERS\n\n\n")
+
         return "All users have been updated"
 
 
@@ -146,6 +147,31 @@ class house_database_handler:
             self.overwrite_json_db(data)
             return "`Sent the CA$H`"
 
+    # pay em bills
+    def taxes(self, house, IRS):
+        houses = [house]
+        if house == "all":
+            houses = self.listHouses()
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+            for house in range(len(houses)):
+                senderIndex = self.find_index_in_db(data["houses"], houses[house])
+                receiverIndex = self.find_index_in_db(data["houses"], IRS)
+
+                if data["houses"][senderIndex]["nettoIncome"] > 100:
+                    amount = data["houses"][senderIndex]["nettoIncome"] * self.houseTax
+                else:
+                    amount = 0
+
+                print(data["houses"][senderIndex]["totalGold"])
+                data["houses"][senderIndex]["totalGold"] = data["houses"][senderIndex]["totalGold"] - amount
+                print(data["houses"][senderIndex]["totalGold"])
+                print(data["houses"][receiverIndex]["totalGold"])
+                data["houses"][receiverIndex]["totalGold"] = data["houses"][receiverIndex]["totalGold"] + amount
+                print(data["houses"][receiverIndex]["totalGold"])
+            # finish, write, close
+            self.overwrite_json_db(data)
+            return "paid "+str(amount)
 
     #  houses can buy stuff
     def buyItem(self, house, item, amount, mode="normal"):
@@ -403,13 +429,16 @@ class house_database_handler:
                     maximumTroopsBeforeDeficit = maxExpenses // self.armySalary
                     return str(maximumTroopsBeforeDeficit)
 
+                if choice == "army" and amount > data["houses"][index]["population"] - data["houses"][index]["elderly"] - data["houses"][index]["children"] - 1:
+                    return "too much army"
+
                 # else, normal mode
                 print("Before Change : ", data["houses"][index][choice])
 
                 if (choice == "upperClassTax" and amount > self.upperClassTaxMax) or (choice == "middleClassTax" and amount > self.middleClassTaxMax) or (choice == "lowerClassTax" and amount > self.lowerClassTaxMax):
                     return "`Too high taxes ( " + str(self.upperClassTaxMax) + " max for upper class), ( " + str(self.middleClassTaxMax) + " max for middle class), ( " + str(self.lowerClassTaxMax) + " max for lower class),`"
 
-                if futureExpenses > data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"] :
+                if choice == "army" and futureExpenses > data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"] :
                     return "```diff\n- Your future expenses would be higher as your income.\nThis is not possible to change over he bot.\nAsk the staff for major changes that come with debt.```"
                 data["houses"][index][choice] = amount
                 data["houses"][index]["workingPopulation"] = int(data["houses"][index]["population"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
