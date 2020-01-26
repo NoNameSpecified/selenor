@@ -77,6 +77,7 @@ token = decrypted.decode()
 client = Bot(command_prefix=BOT_PREFIX)
 
 
+
 """
 
 // GLOBAL THINGS
@@ -324,6 +325,34 @@ async def sendCash(ctx, moneyReceiver="error", amount="error"):
             print("ha, gotcha")
             moneySender = memberRoles[i].lower()
             break
+
+    try:
+        if double_house[moneySender]:
+            print(double_house[moneySender])
+            await ctx.send("```diff\n- Send money from "+ str(moneySender) + " or " + str(double_house[moneySender]) + " [1/2] :```")
+            sleep(0.1)
+            houseChoice = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+            houseChoice = houseChoice.content.lower().strip()
+            if houseChoice != "1" and houseChoice != "2":
+                await ctx.send("```\nAborted.```")
+                return 1
+            elif houseChoice == "2":
+                houseRole = double_house[moneySender]
+            moneySender = houseRole
+
+            await ctx.send("```Amount```")
+            sleep(0.1)
+            oneMoreThing = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+            amount = oneMoreThing.content.lower().strip()
+
+            await ctx.send("```Receiver```")
+            sleep(0.1)
+            oneMoreThing = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+            moneyReceiver = oneMoreThing.content.lower().strip()
+
+    except:
+        pass
+
     if moneySender == "error" or moneyReceiver == "error" or amount == "error":
         await ctx.send("```diff\n- Error - use the command as\n\\send TO AMOUNT```")
     x = db.listHouses()
@@ -818,6 +847,22 @@ async def showMe(ctx, houseFrom = "error", houseTo = "error"):
         await ctx.send("aborted")
 
 
+# this could theoritically be removed now
+@client.command("taxes", pass_context=True, aliases=["irs"])
+async def population(ctx, house):
+    print("making an offer,,, they cannot refuse.")
+    if ctx.message.author.name not in staffMembers:
+        await ctx.send("nope.")
+        return 0
+    if house == "error":
+        await ctx.send("house maybe")
+        return 0
+    # also possible : "all"
+    if house == "all":
+        get = db.taxes("all", "royal_administration")
+    else:
+        get = db.taxes(house, "royal_administration")
+    await ctx.send(get)
 
 
 """
