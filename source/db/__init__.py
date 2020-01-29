@@ -204,6 +204,17 @@ class house_database_handler:
             elif mode == "normal":
                 # take money
                 data["houses"][house]["totalGold"] = data["houses"][house]["totalGold"] - totalPrice
+                try:
+                    data["houses"][house]["inventory"][item] = data["houses"][house]["inventory"][item] + amount
+                except:
+                    data["houses"][house]["inventory"][item] = amount
+
+                if item == "school":
+                    data["houses"][house]["lowerClassRate"] = data["houses"][house]["lowerClassRate"] - 0.03
+                    data["houses"][house]["middleClassRate"] = data["houses"][house]["middleClassRate"] + 0.03
+                elif item == "city":
+                    data["houses"][house]["population"] = data["houses"][house]["population"] + 15000
+
                 # finish, write, close
                 self.overwrite_json_db(data)
                 return "`House " + str(houseName) + " bought " + str(amount) + " " + str(item) + " for " + str(totalPrice) + " goldpieces.` <@404394261254242306>"
@@ -645,3 +656,36 @@ class house_database_handler:
                         data["houses"][index]["blocked"] = "false"
 
         self.overwrite_json_db(data)
+
+    def grepValue(self, house, value):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+            try:
+                index = self.find_index_in_db(data["houses"], house)
+            except:
+                return "User not found"
+            print(index)
+            try:
+                grepped = data["houses"][index][value]
+            except:
+                return "Value not valid"
+
+            return grepped
+
+    def inventory(self, house):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+            print(house)
+            try:
+                index = self.find_index_in_db(data["houses"], house)
+            except:
+                return "User not found"
+            print(index)
+            try:
+                inventory = data["houses"][index]["inventory"]
+            except:
+                return "Inventory empty"
+
+            return inventory
+
+# EOF
