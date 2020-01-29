@@ -89,7 +89,12 @@ class house_database_handler:
             data = json.load(db) ; x = [data["guilds"][i]["name"] for i in range(len(data["guilds"]))] ; return x
     def listItems(self):
         with open("rates.json", "r") as db:
-            data = json.load(db) ; data = data["shop"] ; x = [key for key, value in data.items()] ; return x
+            y = []
+            data = json.load(db) ; x = [key for key, value in data["shop"].items()]
+            for i in range(len(x)):
+                name = x[i]
+                y.append(data["shop"][name])
+            return x,y
 
     # merge two houses, e.g if one took over the other
     def mergeHouses(self, houseFrom, houseTo):
@@ -180,16 +185,16 @@ class house_database_handler:
             data = json.load(db)
             houseName = house
             house = self.find_index_in_db(data["houses"], house)
-
-            items = self.listItems()
+            print(house, item)
+            items, prices = self.listItems()
             if item not in items:
+                print("error catch 1")
                 return "```Error. Did not found item (list items with \\buy)```"
-            if amount > 10:
-                return "`wtf, not so much at once..`"
 
             try:
                 price = self.shop[item]
             except:
+                print("error catch 2")
                 return "```Error. Did not found item (list items with \\buy)```"
 
             totalPrice = price * amount
