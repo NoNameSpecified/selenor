@@ -230,6 +230,34 @@ async def population(ctx, member="error"):
     await ctx.send(info)
 
 
+# ~~~ users have inventory of things they bought~~~
+@client.command("inventory", pass_context=True, aliases=["stuff", "backpack"], brief="thats a big backback")
+async def population(ctx):
+    # automatically get role of user
+    memberRoles = [y.name.lower() for y in ctx.message.author.roles]
+    # try to get automatically the house of caller
+    for i in range(len(memberRoles)):
+        if memberRoles[i].lower().startswith("house_"):
+            print("ha, gotcha")
+            member = memberRoles[i].lower()
+
+    member = member.lower().strip()
+    print("looking inventory for ", member)
+    request = db.inventory(member)
+    if "empty" in request.lower():
+        await ctx.send("`Inventory empty \\-_-/`Buy something !")
+        return 0
+    itemNames = list(request.keys())
+    print(itemNames[0])
+    charArray = ""
+    for i in range(len(request)):
+        charArray = charArray + ("\n" + "Item " + str(itemNames[i].upper()) + ", amount : " + str(request[itemNames[i]]))
+    await ctx.send("```\nInventory for house " + member + " : \n" + charArray+"\n```")
+    return 0
+
+    await ctx.send(request)
+
+
 # ~~~ get character info ONLY for users NOT STAFF - staff uses the "\user user nickname" ~~~
 @client.command("me", pass_context=True, aliases=["personal"], brief="information about your character")
 async def population(ctx, mode="normal", value = None, amount = None):
@@ -853,6 +881,17 @@ async def showMe(ctx, houseFrom = "error", houseTo = "error"):
     else:
         await ctx.send("aborted")
 
+# grep a specific value
+@client.command("grab", pass_context=True, aliases=["grep"])
+async def population(ctx, house="error", value="error"):
+    if ctx.message.author.name not in staffMembers:
+        await ctx.send("nope.")
+        return 0
+    if house == "error" or value == "error":
+        await ctx.send("house and value to grab please")
+        return 0
+    request = db.grepValue(house, value)
+    await ctx.send(request)
 
 # this could theoritically be removed now
 @client.command("taxes", pass_context=True, aliases=["irs"])
