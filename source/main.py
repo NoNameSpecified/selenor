@@ -139,8 +139,11 @@ async def listUser(ctx):
 # ~~~ list houses ~~~
 @client.command("listItems", pass_context=True, brief="List items for your house", aliases=['items', 'list4'])
 async def listItems(ctx):
-    x = db.listItems()
-    await ctx.send("Here are the available items : " + str(x))
+    x, y = db.listItems()
+    charArray = ""
+    for i in range(len(x)):
+        charArray = charArray + ("\n" + "Item " + str(x[i]) + ", price : " + str(y[i]))
+    await ctx.send("Here are the available items : \n" + charArray)
     return 0
 
 """
@@ -172,8 +175,11 @@ async def buy(ctx, item = None, amount = None):
         return 0
     # if he doesnt specify, just list items
     if item == None:
-        x = db.listItems()
-        await ctx.send("Here are the available items : \n" + str(x))
+        x, y = db.listItems()
+        charArray = ""
+        for i in range(len(x)):
+            charArray = charArray + ("\n" + "Item " + str(x[i]) + ", price : " + str(y[i]))
+        await ctx.send("Here are the available items : \n" + charArray)
         return 0
     # he can buy more, but first, lets go with 1 by default
     if item != None and amount == None:
@@ -181,6 +187,7 @@ async def buy(ctx, item = None, amount = None):
 
     request = db.buyItem(member, item, amount, "info")
     await ctx.send(request)
+    if "error" in request.lower(): return -1
     answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
     yOrNo = answer.content.lower()
     if yOrNo != "y" and yOrNo != "yes":
