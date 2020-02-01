@@ -5,6 +5,24 @@ from db import *
 from time import sleep
 
 
+i = -1
+while i <= len(y):
+  i += 1
+  try:
+    if y[i] < y[i+1]:
+      saved = y[i]
+      y[i] = y[i+1]
+      y[i+1] = saved
+
+      saved = x[i]
+      x[i] = x[i+1]
+      x[i+1] = saved
+
+      i = -1
+  except:
+    pass
+
+
 
 # --------- Info and general informations, and the token encryption thing -----------
 
