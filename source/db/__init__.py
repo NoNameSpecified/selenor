@@ -1,6 +1,7 @@
 import json
 import os, time
 import random
+from datetime import datetime
 
 
 """
@@ -56,6 +57,21 @@ class house_database_handler:
             "school": self.school
         }
 
+    # in the selenor game, we calculated everything with dices, i.e for example !roll 10d20*100 for population etc
+    def dice(self, numberOfDices, diceFaces):
+        result = diceFaces/2
+        for i in range(numberOfDices+1):
+            result = result + random.randint(1, diceFaces)
+        return int(result)
+
+    # logs, for logs..
+    def log(self, content):
+        now = datetime.now()
+        dateAndTime = now.strftime("%d/%m/%Y %H:%M:%S")
+        logFile = open("logs.txt", "a")
+        logFile.write(dateAndTime+" : " + content + "\n")
+        logFile.close()
+        return 0
 
     # used after changing the json, to overwrite the database
     def overwrite_json_db(self, content):
@@ -67,10 +83,7 @@ class house_database_handler:
     # houses are only marked with nametags, from which we must find the correct index
     def find_index_in_db(self, dataToFindIn, userNameToFind):
         for i in range(len(dataToFindIn)):
-            print(userNameToFind)
-            print(i)
             if dataToFindIn[i]["name"].lower() == userNameToFind.lower():
-                print(i, "\n\n")
                 return int(i)
         # as we return a string the program will abort
         print("failed at ", userNameToFind)
@@ -100,16 +113,15 @@ class house_database_handler:
     def mergeHouses(self, houseFrom, houseTo):
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
-            print(houseFrom, houseTo)
             indexFrom = self.find_index_in_db(data["houses"], houseFrom)
             indexTo = self.find_index_in_db(data["houses"], houseTo)
             # give population and gold.
             # the other values will be recalculated
-            print(indexTo, indexFrom)
             data["houses"][indexTo]["population"] = int(data["houses"][indexTo]["population"]) + int(data["houses"][indexFrom]["population"])
             data["houses"][indexTo]["totalGold"] = int(data["houses"][indexTo]["totalGold"]) + int(data["houses"][indexFrom]["totalGold"])
             # mark as inactive in the db, dont delete it (coz u never know)
             data["houses"][indexFrom]["active"] = "False"
+            self.log("Merged house " + str(houseFrom) + " with " + str(houseTo))
             self.overwrite_json_db(data)
         return "Merged."
 
@@ -119,12 +131,12 @@ class house_database_handler:
         for house in x:
             self.updateHouse(house)
             self.taxes(house, "royal_administration")
-        print("\n\n\nFINISHED HOUSES\n\n\n")
+        print("\n\n\nUPDATE FINISHED HOUSES\n\n\n")
         x = self.listUsers()
         for player in x:
             self.updatePlayer(player)
-        print("\n\n\nFINISHED PLAYERS\n\n\n")
-
+        print("\n\n\nUPDATE FINISHED PLAYERS\n\n\n")
+        self.log("Updated all houses and players and paid taxes.")
         return "All users have been updated"
 
 
@@ -141,13 +153,9 @@ class house_database_handler:
             else:
                 return "error"
 
-            print(data["houses"][senderIndex]["totalGold"])
             data["houses"][senderIndex]["totalGold"] = data["houses"][senderIndex]["totalGold"] - amount
-            print(data["houses"][senderIndex]["totalGold"])
-            print(mode, receiverIndex)
-            print(data[mode][receiverIndex]["totalGold"])
             data[mode][receiverIndex]["totalGold"] = data[mode][receiverIndex]["totalGold"] + amount
-            print(data[mode][receiverIndex]["totalGold"])
+            self.log("House " +str(sender) + " sent " +str(receiver) + " " + str(amount) + " goldpieces")
             # finish, write, close
             self.overwrite_json_db(data)
             return "`Sent the CA$H`"
@@ -168,12 +176,9 @@ class house_database_handler:
                 else:
                     amount = 0
 
-                print(data["houses"][senderIndex]["totalGold"])
                 data["houses"][senderIndex]["totalGold"] = data["houses"][senderIndex]["totalGold"] - amount
-                print(data["houses"][senderIndex]["totalGold"])
-                print(data["houses"][receiverIndex]["totalGold"])
                 data["houses"][receiverIndex]["totalGold"] = data["houses"][receiverIndex]["totalGold"] + amount
-                print(data["houses"][receiverIndex]["totalGold"])
+            self.log("All houes paid taxes")
             # finish, write, close
             self.overwrite_json_db(data)
             return "paid "+str(amount)
@@ -185,16 +190,13 @@ class house_database_handler:
             data = json.load(db)
             houseName = house
             house = self.find_index_in_db(data["houses"], house)
-            print(house, item)
             items, prices = self.listItems()
             if item not in items:
-                print("error catch 1")
                 return "```Error. Did not found item (list items with \\buy)```"
 
             try:
                 price = self.shop[item]
             except:
-                print("error catch 2")
                 return "```Error. Did not found item (list items with \\buy)```"
 
             totalPrice = price * amount
@@ -203,18 +205,22 @@ class house_database_handler:
                 return "`Buying " + str(amount) + " " + str(item) + " for " + str(totalPrice) + " goldpieces ? [y/N]`"
             elif mode == "normal":
                 # take money
+                if totalPrice > data["houses"][house]["totalGold"]:
+                    return "`Not enough funds.`"
                 data["houses"][house]["totalGold"] = data["houses"][house]["totalGold"] - totalPrice
                 try:
                     data["houses"][house]["inventory"][item] = data["houses"][house]["inventory"][item] + amount
                 except:
+                    data["houses"][house]["inventory"] = {}
                     data["houses"][house]["inventory"][item] = amount
 
                 if item == "school":
                     data["houses"][house]["lowerClassRate"] = data["houses"][house]["lowerClassRate"] - 0.03
-                    data["houses"][house]["middleClassRate"] = data["houses"][house]["middleClassRate"] + 0.03
+
                 elif item == "city":
                     data["houses"][house]["population"] = data["houses"][house]["population"] + 15000
 
+                self.log("House " +str(houseName) + " bought " +str(item) + ". Amount : " + str(amount) + " for " + str(totalPrice) + " goldpieces")
                 # finish, write, close
                 self.overwrite_json_db(data)
                 return "`House " + str(houseName) + " bought " + str(amount) + " " + str(item) + " for " + str(totalPrice) + " goldpieces.` <@404394261254242306>"
@@ -223,24 +229,19 @@ class house_database_handler:
     def lookFor(self, user, mode="house", personalMode = "normal", personalValue = None, personalAmount = None):
         with open(self.pathToJson) as db:
             data = json.load(db)
-            print("Loaded Database")
-            print("Going on")
             # index set to -1 if below code fails, obsolete with the new try
             # but anyways
 
             if mode == "house":
                 index = self.find_index_in_db(data["houses"], user)
-                print("checkpoint 1")
                 if data["houses"][index]["name"].lower() != user.lower() or index == -1:
                     return "```diff\n- error, get the name right pls```"
-                print("checkpoint 2")
                 # that took some time..
                 name = str(data["houses"][index]["name"]) ; population = str(data["houses"][index]["population"]) ; natality = str(data["houses"][index]["natality"]) ; childrenRate = str(data["houses"][index]["childrenRate"]) ; elderlyRate = str(data["houses"][index]["elderlyRate"]) ; mortality = str(data["houses"][index]["mortality"]) ; popularity = str(data["houses"][index]["popularity"]) ; children = str(data["houses"][index]["children"]) ; elderly = str(data["houses"][index]["elderly"]) ;  workingPopulation = str(data["houses"][index]["workingPopulation"]) ; menPart = str(data["houses"][index]["menPart"]) ; womenPart = str(data["houses"][index]["womenPart"]) ; men = str(int(data["houses"][index]["men"])) ; women = str(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"]) ; lowerClassRate = str(data["houses"][index]["lowerClassRate"]) ;  upperClassRate = str(data["houses"][index]["upperClassRate"]) ; lowerClassTax = str(data["houses"][index]["lowerClassTax"]) ; middleClassTax = str(data["houses"][index]["middleClassTax"]) ; upperClassTax = str(data["houses"][index]["upperClassTax"]) ; lowerClass = str(data["houses"][index]["lowerClass"]) ;  middleClass = str(data["houses"][index]["middleClass"]) ; upperClass = str(data["houses"][index]["upperClass"]) ; army = str(data["houses"][index]["army"]) ; guildTax = str(data["houses"][index]["guildTax"]) ; vassalTax = str(data["houses"][index]["vassalTax"]) ; lordTax = str(data["houses"][index]["lordTax"]) ; income = str(data["houses"][index]["income"]) ;  expenses = str(data["houses"][index]["expenses"]) ; totalGold = str(data["houses"][index]["totalGold"]) ; knights = str(data["houses"][index]["knights"]) ; guards = str(data["houses"][index]["guards"]) ; squires = str(data["houses"][index]["squires"]) ; nettoIncome = str(data["houses"][index]["nettoIncome"])
                 # Discord formatted information to return
-                print("checkpoint 3")
                 # This took some time ...
                 formattedInfo = str("\n```diff\n-        Population of " + name + ":\nTotal Population : " + population + "\nChildren : " + children + "\nElders : " + elderly + "\nWorking Population : " + workingPopulation + "\nMen : " + men + "\nWomen : " + women + "\nMiddle Class : " + middleClass + "\nUpper Class : " + upperClass + "\nPoor Class : " + lowerClass + "\nArmy : " + army + " men" + "\nGuards : " + guards + "\nKnights : " + knights + "\nSquires : " + squires + "\n\n\n-          Statistics" + "\nPopularity : " + str((float(popularity)*100)) + " percent" + "\nNatality : " + str((float(natality)*100)) + " percent" + "\nMortality : " + str((float(mortality)*100)) + " percent" + "\nchildren rate : " + str((float(childrenRate)*100)) + " percent" + "\nElders Rate : " + str((float(elderlyRate)*100)) + " percent" + "\nLower Class Rate : " + str((float(lowerClassRate)*100)) + " percent" + "\nUpper Class Rate : " + str((float(upperClassRate)*100)) + " percent" + "\nLower Class Tax : " + lowerClassTax + "\nMiddle Class Tax : " + middleClassTax + "\nUpper Class Tax: " + upperClassTax + "\n\n\n-          Economy" + "\nRaw income : " + income + "\nExpenses :   " + expenses + "\nIncome :    " + nettoIncome + "\nTotal Gold : " + totalGold + "\n```")
-                print("done")
+
                 try:
                     if data["houses"][index]["blocked"] == "true":
                         formattedInfo = str("\n```diff\n-        Population of " + name + ":\nTotal Population : " + population + "\nChildren : " + children + "\nElders : " + elderly + "\nWorking Population : " + workingPopulation + "\nMen : " + men + "\nWomen : " + women + "\nMiddle Class : " + middleClass + "\nUpper Class : " + upperClass + "\nPoor Class : " + lowerClass + "\n- Army : BLOCKED (you are in debt)" + "\nGuards : " + guards + "\nKnights : " + knights + "\nSquires : " + squires + "\n\n\n-          Statistics" + "\nPopularity : " + str((float(popularity)*100)) + " percent" + "\nNatality : " + str((float(natality)*100)) + " percent" + "\nMortality : " + str((float(mortality)*100)) + " percent" + "\nchildren rate : " + str((float(childrenRate)*100)) + " percent" + "\nElders Rate : " + str((float(elderlyRate)*100)) + " percent" + "\nLower Class Rate : " + str((float(lowerClassRate)*100)) + " percent" + "\nUpper Class Rate : " + str((float(upperClassRate)*100)) + " percent" + "\nLower Class Tax : " + lowerClassTax + "\nMiddle Class Tax : " + middleClassTax + "\nUpper Class Tax: " + upperClassTax + "\n\n\n-          Economy" + "\nRaw income : " + income + "\nExpenses :   " + expenses + "\nIncome :    " + nettoIncome + "\nTotal Gold : " + totalGold + "\n```")
@@ -278,7 +279,7 @@ class house_database_handler:
             # guild information
             elif mode == "guilds":
                     index = self.find_index_in_db(data["guilds"], user)
-                    print(index)
+
                     name = str(data["guilds"][index]["name"]); owner = str(data["guilds"][index]["owner"]) ; location = str(data["guilds"][index]["location"]) ;  totalGold = str(data["guilds"][index]["totalGold"])
                     formattedInfo = str("\n```diff\n-        Stats of Guild of " + name + ":\nOwner : " + owner + "\nLocation : " + location + "\nTotal Gold : " + totalGold + "```")
                     return formattedInfo
@@ -299,7 +300,7 @@ class house_database_handler:
     def calculate_popularity(self, index):
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
-            print(index)
+
             middleTax = data["houses"][index]["middleClassTax"]
             lowerTax = data["houses"][index]["lowerClassTax"]
             upperTax = data["houses"][index]["upperClassTax"]
@@ -322,7 +323,7 @@ class house_database_handler:
         # check if user exists
         users = self.listUsers()
         if name in users:
-            print("nope, user already exists")
+            # already exists
             return("error")
         # load and save in memory
         # load and save in mem the json file
@@ -363,7 +364,7 @@ class house_database_handler:
         # check if user exists
         users = self.listUsers()
         if self.uName in users:
-            print("nope, user already exists")
+            # already exists
             return("error")
         # load and save in mem the json file
         try:
@@ -433,7 +434,6 @@ class house_database_handler:
                 return str(massTroops)
 
         if mode == "normal":
-            print("Changing for ", houseRole)
             with open(self.pathToJson, "r") as db:
                 data = json.load(db)
                 index = self.find_index_in_db(data["houses"], houseRole)
@@ -449,7 +449,6 @@ class house_database_handler:
                     return "too much army"
 
                 # else, normal mode
-                print("Before Change : ", data["houses"][index][choice])
 
                 if (choice == "upperClassTax" and amount > self.upperClassTaxMax) or (choice == "middleClassTax" and amount > self.middleClassTaxMax) or (choice == "lowerClassTax" and amount > self.lowerClassTaxMax):
                     return "`Too high taxes ( " + str(self.upperClassTaxMax) + " max for upper class), ( " + str(self.middleClassTaxMax) + " max for middle class), ( " + str(self.lowerClassTaxMax) + " max for lower class),`"
@@ -468,17 +467,14 @@ class house_database_handler:
                     data["houses"][index]["expenses"] = amount * self.armySalary + data["houses"][index]["guards"] * self.guardsSalary
 
         if mode == "players":
-            print("Changing for ", houseRole)
             with open(self.pathToJson, "r") as db:
                 data = json.load(db)
                 index = self.find_index_in_db(data["players"], houseRole)
-                print(choice, amount)
                 # else, normal mode
-                print("Before Change : ", data["players"][index][choice])
                 if choice != "name" and choice != "equipment": amount = int(amount)
                 data["players"][index][choice] = amount
-                print("bruh")
         # finish, write, close
+        self.log("House/Player " +str(houseRole) + " changed " + choice + " to " + str(amount))
         self.overwrite_json_db(data)
         self.recalculate_economy("all")
         # inform user
@@ -493,7 +489,6 @@ class house_database_handler:
                 index = self.find_index_in_db(data["players"], user)
             except:
                 return "User not found"
-            print(index)
             if data["players"][index]["age"] > 16:
                 data["players"][index]["age"] = data["players"][index]["age"] + 1
             else:
@@ -513,7 +508,6 @@ class house_database_handler:
                 index = self.find_index_in_db(data["houses"], user)
             except:
                 return "User not found"
-            print(index)
 
             """
                 many things to change.. yes it took me some time too lmao
@@ -528,13 +522,10 @@ class house_database_handler:
             women = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
             #knights, guards, squires = 0, 0, 0
 
-            print(data["houses"][index]["name"])
             for ii in range(len(data["houses"])):
 
                 house = data["houses"][ii]["name"].split("_")[1]
-                print(house)
                 guards = self.calculate_guards(house)
-                print("wwww")
 
             data["houses"][index]["guards"] = guards
             lowerClass = int(workingPopulation * data["houses"][index]["lowerClassRate"])
@@ -584,13 +575,9 @@ class house_database_handler:
             data["houses"][index]["popularity"] = popularity
 
             data["houses"][index]["income"] = income
-            print(data["houses"][index]["income"])
             data["houses"][index]["expenses"] = expenses
-            print(data["houses"][index]["totalGold"])
             data["houses"][index]["totalGold"] = totalGold
-            print(totalGold)
             data["houses"][index]["nettoIncome"] = nettoIncome
-            print(nettoIncome)
             if data["houses"][index]["totalGold"] < 0 :
                 data["houses"][index]["blocked"] = "true"
                 debt = True
@@ -601,10 +588,9 @@ class house_database_handler:
             #data["houses"][index]["knights"] = knights
             #data["houses"][index]["guards"] = guards
             #data["houses"][index]["squires"] = squires
-            print("DOOOND \n\n")
+            self.log("Updated house " + str(user))
             #overwrite old file
             self.overwrite_json_db(data)
-            print("wrote DATA")
             # nice, lets inform the user
             if debt == True:
                 return r"/!\ Player is currently in debt. Army blocked."
@@ -618,20 +604,17 @@ class house_database_handler:
                 for index in range(len(data["houses"])):
 
                     house = data["houses"][index]["name"].split("_")[1]
-                    print(house)
                     guards = self.calculate_guards(house)
                     data["houses"][index]["guards"] = guards
                     data["houses"][index]["children"] = int(data["houses"][index]["population"] * data["houses"][index]["childrenRate"])
                     data["houses"][index]["elderly"] = int(data["houses"][index]["population"] * data["houses"][index]["elderlyRate"])
                     data["houses"][index]["workingPopulation"] = int(data["houses"][index]["population"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
                     data["houses"][index]["men"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
-
                     data["houses"][index]["women"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
                     data["houses"][index]["lowerClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["lowerClassRate"])
                     data["houses"][index]["upperClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["upperClassRate"])
                     data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
                     data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["upperClass"] * data["houses"][index]["upperClassTax"]
-                    print(data["houses"][index]["army"], self.armySalary)
                     data["houses"][index]["expenses"] = int(data["houses"][index]["army"]) * self.armySalary + int(data["houses"][index]["guards"]) * self.guardsSalary
                     data["houses"][index]["nettoIncome"] = data["houses"][index]["income"] - data["houses"][index]["expenses"]
                     popularity = self.calculate_popularity(index)
@@ -641,8 +624,6 @@ class house_database_handler:
                     lower = data["houses"][index]["upperClassTax"] / 200
                     middle = data["houses"][index]["middleClassTax"] / 100
                     upper = data["houses"][index]["lowerClassTax"] / 60
-                    print(lower, middle, upper)
-                    print(lower * random.randint(50,60) + middle *  random.randint(50,60) + upper *  random.randint(12,20))
                     health = 100 - (lower * random.randint(50,60) + middle *  random.randint(50,60) + upper *  random.randint(12,20) )
                     data["houses"][index]["health"] = health
                     natality = (data["houses"][index]["health"] / 100) * 5
@@ -657,16 +638,15 @@ class house_database_handler:
 
         self.overwrite_json_db(data)
 
-    def grepValue(self, house, value):
+    def grepValue(self, house, value, mode="houses"):
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
             try:
-                index = self.find_index_in_db(data["houses"], house)
+                index = self.find_index_in_db(data[mode], house)
             except:
                 return "User not found"
-            print(index)
             try:
-                grepped = data["houses"][index][value]
+                grepped = data[mode][index][value]
             except:
                 return "Value not valid"
 
@@ -675,17 +655,17 @@ class house_database_handler:
     def inventory(self, house):
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
-            print(house)
             try:
                 index = self.find_index_in_db(data["houses"], house)
             except:
                 return "User not found"
-            print(index)
             try:
+
                 inventory = data["houses"][index]["inventory"]
             except:
                 return "Inventory empty"
 
             return inventory
 
+# bruh, line 652 the 1st february 2020
 # EOF
