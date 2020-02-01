@@ -3,6 +3,8 @@ from discord.ext.commands import Bot
 # custom database handler
 from db import *
 from time import sleep
+from discord.ext.commands import CommandNotFound
+
 
 
 # --------- Info and general informations, and the token encryption thing -----------
@@ -19,9 +21,7 @@ INFO :
 
     the database handler is from db/__init__.py
 
-CURRENT TODO :
-
-    - get to use asynchronous functions for example to check if staff, to check if house leader etc...
+    (the tiny ascii arts are from http://www.ascii.co.uk/art/ )
 
 """
 
@@ -91,6 +91,7 @@ double_house = {
     "house_lancaster": "royal_administration"
 }
 
+
 # hello there
 @client.command("listStaff", brief="list staff allowed usery")
 async def listStaff(ctx):
@@ -99,14 +100,15 @@ async def listStaff(ctx):
 # ~~~ er nothing to see here ! move on ~~~
 @client.command("gFuel", pass_context=True, brief="nothing to see here", aliases=['69'])
 async def listHouse(ctx):
-    if (ctx.message.author.name == "birb" or ctx.message.author.name == "Kendrik") and ctx.channel.name == "munkie-gang":
+    if (ctx.message.author.name == "birb" or ctx.message.author.name == "Kendrik"):
         await ctx.send("@birb#1435 is the pengest ever -PArAnoiD 2020")
 
 # ~~~ set custom status ~~~
 @client.event
 async def on_ready():
     activity = discord.Game(name="The Crown of Selenor")
-    await client.change_presence(status=discord.Status.do_not_disturb, activity=activity)
+    await client.change_presence(status=discord.Status.online, activity=activity)
+
 
 # ~~~ list houses ~~~
 @client.command("listHouses", pass_context=True, brief="List all houses", aliases=['listhouses', 'list1'])
@@ -149,6 +151,12 @@ async def listItems(ctx):
 
 // USER THINGS
 
+          ___I_
+         /\-_--\
+        /  \_-__\
+        |[]| [] |
+
+
 """
 
 
@@ -158,6 +166,7 @@ async def listItems(ctx):
 async def population(ctx):
     db.recalculate_economy("all")
     await ctx.send("ok")
+
 
 # ~~~ buy some things in the shop ~~~
 @client.command("buy", pass_context=True, aliases=["buyItems", "shop"])
@@ -196,16 +205,19 @@ async def buy(ctx, item = None, amount = None):
     tryOrFail = db.buyItem(member, item, amount, "normal")
     await ctx.send(tryOrFail)
 
+
 # ~~~ "\stats" to get information about client house ; "\stats" house_xyz for admin ~~~
 @client.command("stats", pass_context=True, aliases=["population"], brief="information about your population")
 async def population(ctx, member="error"):
     # automatically get role of user
+    print(member)
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
     # try to get automatically the house of caller
     for i in range(len(memberRoles)):
         if memberRoles[i].lower().startswith("house_"):
             print("ha, gotcha")
             member = memberRoles[i].lower()
+            print(member)
     try:
         if double_house[member]:
             print(double_house[member])
@@ -231,7 +243,7 @@ async def population(ctx, member="error"):
 
 # ~~~ users have inventory of things they bought~~~
 @client.command("inventory", pass_context=True, aliases=["stuff", "backpack"], brief="thats a big backback")
-async def population(ctx):
+async def population(ctx, house="error"):
     # automatically get role of user
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
     # try to get automatically the house of caller
@@ -240,14 +252,19 @@ async def population(ctx):
             print("ha, gotcha")
             member = memberRoles[i].lower()
 
+    if ctx.message.author in staffMembers and house=="error":
+        await ctx.send("`Use as \\inventory house_name`")
+    elif ctx.message.author in staffMembers: member = house
+
     member = member.lower().strip()
     print("looking inventory for ", member)
     request = db.inventory(member)
-    if "empty" in request.lower():
+    if "empty" in request:
         await ctx.send("`Inventory empty \\-_-/`Buy something !")
         return 0
     itemNames = list(request.keys())
     print(itemNames[0])
+    # ey im actually kinda happy that worked !!
     charArray = ""
     for i in range(len(request)):
         charArray = charArray + ("\n" + "Item " + str(itemNames[i].upper()) + ", amount : " + str(request[itemNames[i]]))
@@ -544,9 +561,78 @@ async def singleChange(ctx):
 
 """
 
-// START OF STAFF ONLY
+// GAME THINGS (fights and all)
+            Spartians ! Lay down your weapons !
+      /| ________________
+O|===|* >________________>
+      \|
 
 """
+
+
+
+# ~~~ and his name is..... (john cena) ~~~
+@client.command("fight", pass_context=True, brief="update user", aliases=['Fight', 'wwe'])
+async def updateAll(ctx):
+    if ctx.message.author.name not in staffMembers:
+        await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
+        return 1
+    # init variables
+    anotherOne, index, players, playerAttacks = True, -1, [], []
+
+    # get all members in fight
+    while anotherOne:
+        index += 1
+        await ctx.send("```Player " + str(index) + ": name```")
+        answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+        if answer.content.lower() in ["abort", "stop"]:
+            return -1
+        if answer.content.lower() in ["none", "no"]:
+            anotherOne == False
+            break
+        players.append(answer.content.lower())
+
+    # grep all attackStats
+    for i in range(len(players)):
+        request = (db.grepValue(players[i], "attackStats", "players"))
+        print(request)
+        playerAttacks.append(int(request))
+    # backup, just in case
+    rankedStats = playerAttacks
+
+    # custom sort, we sort the attack stats and player list appropriately
+    i = -1
+    while i <= len(playerAttacks):
+      i += 1
+      try:
+        if rankedStats[i] < rankedStats[i+1]:
+          saved = rankedStats[i]
+          rankedStats[i] = rankedStats[i+1]
+          rankedStats[i+1] = saved
+
+          saved = players[i]
+          players[i] = players[i+1]
+          players[i+1] = saved
+
+          i = -1
+      except:
+        pass
+
+    await ctx.send("```Sorted the players : ```" + str(players))
+
+
+
+"""
+
+// START OF STAFF ONLY
+        GET OFF MY PROPERTY
+    ___
+ __(   )====::
+/~~~~~~~~~\
+\O.O.O.O.O/
+
+"""
+
 
 
 # ~~~ update all houses (used once per week, changes population etc) ~~~
@@ -581,25 +667,16 @@ async def updateUser(ctx):
 
 # ~~~ update specific stuff ADMIN STUFF ~~~
 @client.command("changeHouse", pass_context=True, aliases=["staff1"], brief="staff can update a house")
-async def singleStaffChange(ctx):
+async def singleStaffChange(ctx, house="error", choice="error", amount="error"):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
     if ctx.message.author.name not in staffMembers:
         await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
         return 1
-    await ctx.send("House to change :")
-    sleep(0.1)
-    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    houseRole = answer.content.lower().strip()
-    sleep(1)
-    await ctx.send("```diff\nWhich value do you want to change ?```")
-    sleep(0.1)
-    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    choice = answer.content.strip()
-    sleep(1)
-    await ctx.send("```diff\nNew Value : ```")
-    sleep(0.1)
-    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    amount = float(answer.content.lower().strip())
+
+    if house == "error" or choice == "error" or amount == "error":
+        await ctx.send("`Use as \\staff1 house_name choice newValue`")
+
+    amount = float(amount)
     #  check again
     await ctx.send("```diff\nSure [y/N]```")
     answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
@@ -618,25 +695,20 @@ async def singleStaffChange(ctx):
 
 # ~~~ staff change player stats ~~~
 @client.command("changePlayer", pass_context=True, aliases=["staff2", "changeUser"], brief="staff can change character stats")
-async def singleStaffChange(ctx):
+async def singleStaffChange(ctx, choice="error", amount="error"):
     memberRoles = [y.name.lower() for y in ctx.message.author.roles]
     if ctx.message.author.name not in staffMembers:
         await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
         return 1
+    if choice == "error" or amount == "error":
+        await ctx.send("`Use as \\staff2 choice amount`")
     await ctx.send("player to change :")
+
     sleep(0.1)
     answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
     houseRole = answer.content.lower().strip()
-    sleep(1)
-    await ctx.send("```diff\nWhich value do you want to change ?```")
-    sleep(0.1)
-    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    choice = answer.content.strip()
-    sleep(1)
-    await ctx.send("```diff\nNew Value : ```")
-    sleep(0.1)
-    answer = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    if choice != "name" and choice!= "equipment": amount = float(answer.content.lower().strip())
+
+    if choice != "name" and choice!= "equipment": amount = float(amount)
     else: amount = str(answer.content.lower().strip())
     #  check again
     await ctx.send("```diff\nSure [y/N]```")
@@ -673,31 +745,13 @@ async def initUser(ctx):
     await ctx.send("Age of player :")
     age = await client.wait_for('message', check=lambda message: message.author == ctx.author)
     age = int(age.content.strip())
-    sleep(0.5)
-    await ctx.send("attackStats of player :")
-    attack = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    attack = int(attack.content.strip())
-    sleep(0.5)
-    await ctx.send("counterStats of player :")
-    counterStats = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    counterStats = int(counterStats.content.strip())
-    sleep(0.5)
-    await ctx.send("equipment of player :")
-    equipment = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    equipment = str(equipment.content.strip())
-    sleep(0.5)
-    await ctx.send("dexterity of player :")
-    dexterity = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    dexterity = int(dexterity.content.strip())
-    sleep(0.5)
-    await ctx.send("assassinationCapacity of player :")
-    assassinationCapacity = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    assassinationCapacity = int(assassinationCapacity.content.strip())
-    sleep(0.5)
-    await ctx.send("guards of player :")
-    guards = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    guards = int(guards.content.strip())
-    sleep(0.5)
+
+    attack = 8
+    counterStats = 8
+    equipment = "basic sword"
+    dexterity = 8
+    assassinationCapacity = 8
+    guards = 1
 
     # all setup, check one last time
     await ctx.send("Create user (YES or no)")
@@ -712,130 +766,66 @@ async def initUser(ctx):
 
 # ~~~ init a house ~~~
 @client.command("initHouse", pass_context=True, brief="create a new house",  aliases=['createHouse', 'init_house'])
-async def initHouse(ctx):
+async def initHouse(ctx, house_name="error"):
     # only staff can create members
     if ctx.message.author.name not in staffMembers:
         await ctx.send("```diff\n- Hey ! Dont do this if you arent staff```")
         return 1
 
-    """
-        Asking all the stuff
-    """
-
-    await ctx.send("new user name :")
-    uName = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("user population")
-    population = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("user natality in %")
-    natality = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("children rate in %")
-    childrenRate = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("elderly rate in %")
-    elderlyRate = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("mortality rate in %")
-    mortality = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("popularity in %")
-    popularity = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Men rate in %")
-    menPart = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Lower class rate in %")
-    lowerClassRate = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Upper class rate in %")
-    upperClassRate = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Lower Class tax - int")
-    lowerClassTax = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Middle Class tax - int")
-    middleClassTax = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Upper Class tax - int")
-    upperClassTax = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Initial Army - int")
-    army = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Guild Tax - int")
-    guildTax = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Vassal Tax - int")
-    vassalTax = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Lord Tax - int")
-    lordTax = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Initial Gold - int")
-    totalGold = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Number of knights - int")
-    knights = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Number of guards - int")
-    guards = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
-    await ctx.send("Number of squires - int")
-    squires = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-    sleep(1)
+    if house_name == "error":
+        await ctx.send("`Please enter a name too`")
+        return 0
 
     """
-        Converting all the stuff, precalculating a bit
+        calculating
     """
+    # population
+    diceResult = db.dice(10, 20)
+    population = diceResult * 100
 
-    uName = uName.content.strip()
-    population = int(population.content)
-    natality = float(natality.content) / 100
-    childrenRate = float(childrenRate.content) / 100
-    elderlyRate = float(elderlyRate.content) / 100
-    mortality = float(mortality.content) / 100
-    popularity = float(popularity.content) / 100
+    natality = 5 / 100
+    childrenRate = db.dice(1, 10) / 100
+    elderlyRate = db.dice(1, 10) / 100
+    mortality = 5 / 100
+    popularity = 80 / 100
+
+    diceResult = db.dice(1, 20)
+    menPart = (diceResult + 40) / 100
+
+    lowerClassRate = db.dice(1, 30) / 100
+    upperClassRate = db.dice(1, 6) / 100
+    lowerClassTax = 10
+    middleClassTax = 10
+    upperClassTax = 10
+    army = 0
+    guildTax, vassalTax, lordTax, knights, squires, guards = 0, 0, 0, 0, 0, 0
+    totalGold = 50000
+
+    # calculating the actual amounts out of the rates
     children = int((childrenRate) * population)
     elderly = int((elderlyRate) * population)
     workingPopulation = int(population - children - elderly)
-    menPart = float(menPart.content) / 100
     womenPart = 1 - menPart
     men = int((menPart) * workingPopulation)
     women = int(workingPopulation - men)
-    lowerClassRate = float(lowerClassRate.content) / 100
-    upperClassRate = float(upperClassRate.content) / 100
-    lowerClassTax = float(lowerClassTax.content)
-    middleClassTax = float(middleClassTax.content)
-    upperClassTax = float(upperClassTax.content)
     lowerClass = int((lowerClassRate) * workingPopulation)
     upperClass = int((upperClassRate) * workingPopulation)
     middleClass = int(workingPopulation - lowerClass - upperClass)
-    army = int(army.content)
-    guildTax = float(guildTax.content)
-    vassalTax = float(vassalTax.content)
-    lordTax = float(lordTax.content )
     income = 0
     expenses = 0
-    totalGold = float(totalGold.content)
-    knights = int(knights.content)
-    guards = int(guards.content)
-    squires = int(squires.content)
 
     """
         Processing with the database stuff
     """
 
     await ctx.send("processing request")
-    sleep(4) # yes, this is useless and only to be like "oh we re making complicated stuff" xDD
 
     # all setup, check one last time
     await ctx.send("Create user (YES or no)")
     askHim = await client.wait_for('message')
     if askHim.content.lower().strip() == "yes" or askHim.content.lower().strip() == "y":
         # this is a loooot of variables lmao
-        db.createHouse(uName, population, natality, childrenRate, elderlyRate, mortality, popularity, children, elderly, workingPopulation, menPart, womenPart, men, women, lowerClassRate, upperClassRate, lowerClassTax, middleClassTax, upperClassTax, lowerClass, middleClass, upperClass, army, guildTax, vassalTax, lordTax, income, expenses, totalGold, knights, guards, squires)
+        db.createHouse(house_name, population, natality, childrenRate, elderlyRate, mortality, popularity, children, elderly, workingPopulation, menPart, womenPart, men, women, lowerClassRate, upperClassRate, lowerClassTax, middleClassTax, upperClassTax, lowerClass, middleClass, upperClass, army, guildTax, vassalTax, lordTax, income, expenses, totalGold, knights, guards, squires)
         await ctx.send("seems like everything turned out ok.")
     else:
         await ctx.send("aborted")
@@ -892,22 +882,7 @@ async def population(ctx, house="error", value="error"):
     request = db.grepValue(house, value)
     await ctx.send(request)
 
-# this could theoritically be removed now
-@client.command("taxes", pass_context=True, aliases=["irs"])
-async def population(ctx, house):
-    print("making an offer,,, they cannot refuse.")
-    if ctx.message.author.name not in staffMembers:
-        await ctx.send("nope.")
-        return 0
-    if house == "error":
-        await ctx.send("house maybe")
-        return 0
-    # also possible : "all"
-    if house == "all":
-        get = db.taxes("all", "royal_administration")
-    else:
-        get = db.taxes(house, "royal_administration")
-    await ctx.send(get)
+
 
 
 """
@@ -941,3 +916,5 @@ print("Starting bot")
 client.run(token)
 # tada ! line 709 at 11.01.20 lmao
 # bruh, 789 now at 18.01.20
+# hmm, 30.01.20 - 947 lines
+# actually, 1st february : doing a lot of optimization, so - 913 lines ! (nice)
