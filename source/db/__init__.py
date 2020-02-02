@@ -131,6 +131,7 @@ class house_database_handler:
         for house in x:
             self.updateHouse(house)
             self.taxes(house, "royal_administration")
+
         print("\n\n\nUPDATE FINISHED HOUSES\n\n\n")
         x = self.listUsers()
         for player in x:
@@ -178,7 +179,6 @@ class house_database_handler:
 
                 data["houses"][senderIndex]["totalGold"] = data["houses"][senderIndex]["totalGold"] - amount
                 data["houses"][receiverIndex]["totalGold"] = data["houses"][receiverIndex]["totalGold"] + amount
-            self.log("All houes paid taxes")
             # finish, write, close
             self.overwrite_json_db(data)
             return "paid "+str(amount)
@@ -666,6 +666,39 @@ class house_database_handler:
                 return "Inventory empty"
 
             return inventory
+
+    def travel(self, member, destination):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+            try:
+                index = self.find_index_in_db(data["players"], member)
+            except:
+                return "User not found"
+            now = datetime.now()
+            dateAndTime = now.strftime("%d/%m/%Y %H:%M:%S")
+            data["players"][index]["travel"] = str(dateAndTime) + ": " + destination
+            self.overwrite_json_db(data)
+            self.log("Player " + str(member) + " travels to " + str(destination))
+            return "Travelling to "+destination
+
+    def travelHistory(self, member):
+        with open(self.pathToJson, "r") as db:
+            userList = [member]
+            resultChar = ""
+            data = json.load(db)
+            if member == "all":
+                userList = self.listUsers()
+            print(userList)
+            for i in range(len(userList)):
+                index = self.find_index_in_db(data["players"], userList[i])
+                try:
+                    destination = data["players"][index]["travel"]
+                    print(data["players"][index]["travel"], destination)
+                    resultChar = resultChar + "Player: `" + str(data["players"][index]["name"]) + "` travelling to `" + destination + "`\n"
+                except:
+                    pass
+            return resultChar
+
 
 # bruh, line 652 the 1st february 2020
 # EOF
