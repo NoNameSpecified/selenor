@@ -320,6 +320,20 @@ async def population(ctx, mode="normal", value = None, amount = None):
     await ctx.send(str(info))
 
 
+# ~~~ people can travel ~~~
+@client.command("travel", pass_context=True, aliases=["move"], brief="information about your character")
+async def population(ctx, *, destination = None):
+    member = ctx.message.author.display_name
+    member = member.lower().strip()
+    if destination == None:
+        await ctx.send("`Enter destination \\travel destination`")
+    print("looking for ", member)
+    print(destination)
+    request = db.travel(member, destination)
+    await ctx.send(request)
+    return 0
+
+
 # ~~~ get information about your guild if you got one ~~~
 @client.command("guild", pass_context=True, aliases=["guildInfo"], brief="information about your guild")
 async def population(ctx, guild="error"):
@@ -882,6 +896,23 @@ async def population(ctx, house="error", value="error"):
     request = db.grepValue(house, value)
     await ctx.send(request)
 
+
+# ~~~ grab travelling ~~~
+@client.command("history", pass_context=True, aliases=["travellingHistory"], brief="information about your character")
+async def population(ctx, *, member = "error"):
+    if ctx.message.author.name not in staffMembers:
+        member = ctx.message.author.display_name.lower().strip()
+    else:
+        member = member.lower().strip()
+    if member == "error":
+        member = "all"
+        print("all")
+    print("looking for ", member)
+
+    request = db.travelHistory(member)
+
+    await ctx.send(request)
+    return 0
 
 
 
