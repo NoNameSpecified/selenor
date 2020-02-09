@@ -1,14 +1,12 @@
 import random, discord
 from discord.ext.commands import Bot
-from discord.utils import get
 # custom database handler
 from test_db import *
 from time import sleep
-from discord.ext.commands import CommandNotFound
 from random import choice
 
 
-# --------- Info and general informations, and the token encryption thing -----------
+# --------- Info and general informations -----------
 
 
 
@@ -44,7 +42,7 @@ staffMembers = ["Kendrik", "Faerix", "TheFlightEnthousiast", "birb", "avo"]
 powerRoles = ["lady", "lord", "mayor", "king", "hand", "house leader"]
 BOT_PREFIX = ("]")
 # Oof close your eyes please !
-token = "ey"
+token = "Njc1NjU0ODM4NDk5MDE2NzQ1.Xj_TVw.es6G6netpQPQtVafR9XjMEKVd0U"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -91,6 +89,7 @@ async def on_message(message):
     # check if message is for our bot
     if not(message.content.startswith(BOT_PREFIX)): return 0;
     command = message.content.split(BOT_PREFIX)[1].lower().split(" ")
+
     i = 1
     param = ["None", "None", "None", "None"]
     for i in range(len(command)):
@@ -99,8 +98,10 @@ async def on_message(message):
     print("x", param)
     command = command[0]
     channel = message.channel
+    server = message.guild
     nickName = message.author.display_name
     if message.author.name in staffMembers: staff = 1
+    else: staff = 0
     # automatically get role of user
     memberRoles = [y.name.lower() for y in message.author.roles]
 
@@ -109,7 +110,6 @@ async def on_message(message):
     # try to get automatically the house of caller
     for i in range(len(memberRoles)):
         if memberRoles[i].lower().startswith("house_"):
-            print("ha, gotcha")
             member = memberRoles[i].lower()
 
     for i in range(len(memberRoles)):
@@ -206,7 +206,8 @@ async def on_message(message):
 
 
     elif command in ["stats", "population"]:
-        member = param[1]
+        if staff == 1:
+            member = param[1]
         try:
             if double_house[member]:
                 print(double_house[member])
@@ -217,13 +218,10 @@ async def on_message(message):
             pass
 
         # by default return an error, this is just when staff calls command without precising
-        if member == "None":
+        if staff == 0 and member == "None":
             await sendError("Enter a name too", channel)
             return "error"
         # obsolete
-        if staff == 0:
-            await channel.send("goddamnit")
-            return 0
         member = member.lower().strip()
         print("looking for ", member)
         info = db.lookFor(member)
@@ -565,7 +563,7 @@ async def on_message(message):
         # // or if there was an error returned, send error message
         await channel.send(updated)
 
-    elif command in ["inituser", "init_user"]:
+    elif command in ["inituser", "init_user", "init2"]:
         if staff == 0: await sendError("Staff only.", channel) ; return 0
 
         await sendRequest("NICKNAME of player :", channel)
@@ -589,7 +587,7 @@ async def on_message(message):
 
         # all setup, check one last time
         await sendRequest("Create user (YES or no)", channel)
-        askHim = await client.wait_for('message')
+        askHim = await client.wait_for('message', check=lambda response: response.author == message.author)
         if askHim.content.lower().strip() == "yes" or askHim.content.lower().strip() == "y":
             # this is a loooot of variables lmao
             db.createUser(name, house, age, attack, counterStats, equipment, dexterity, assassinationCapacity, guards)
@@ -597,7 +595,7 @@ async def on_message(message):
         else:
             await sendError("aborted", channel)
 
-    elif command in ["inithouse", "init_house"]:
+    elif command in ["inithouse", "init_house", "init1"]:
         if staff == 0: await sendError("Staff only.", channel) ; return 0
 
         house_name = param[1]
@@ -652,13 +650,45 @@ async def on_message(message):
 
         # all setup, check one last time
         await sendRequest("Create user (YES or no)", channel)
-        askHim = await client.wait_for('message')
+        askHim = await client.wait_for('message', check=lambda response: response.author == message.author)
         if askHim.content.lower().strip() == "yes" or askHim.content.lower().strip() == "y":
             # this is a loooot of variables lmao
             db.createHouse(house_name, population, natality, childrenRate, elderlyRate, mortality, popularity, children, elderly, workingPopulation, menPart, womenPart, men, women, lowerClassRate, upperClassRate, lowerClassTax, middleClassTax, upperClassTax, lowerClass, middleClass, upperClass, army, guildTax, vassalTax, lordTax, income, expenses, totalGold, knights, guards, squires)
+
+            # we have created the house values
+            # now we create the channels
+            await server.create_category(house_name)
+            await server.create_role(name=house_name)
+
+            newCategory = discord.utils.get(server.categories, name=house_name)
+            newHouseRole = discord.utils.get(server.roles, name=house_name)
+
+            houseChannelName = house_name.split("_")
+
+            await server.create_text_channel( houseChannelName[0] + "-" + houseChannelName[1] + "-general", category=newCategory)
+            newChannel = discord.utils.get(server.channels, name=houseChannelName[0] + "-" + houseChannelName[1] + "-general")
+            await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
+            await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
+
+            await server.create_text_channel( houseChannelName[1] + "-map", category=newCategory)
+            newChannel = discord.utils.get(server.channels, name=houseChannelName[1] + "-map")
+            await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
+            await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
+
+            await server.create_text_channel( houseChannelName[1] + "-administration", category=newCategory)
+            newChannel = discord.utils.get(server.channels, name=houseChannelName[1] + "-administration")
+            await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
+            await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
+
+            await server.create_text_channel( houseChannelName[1] + "-rp", category=newCategory)
+            newChannel = discord.utils.get(server.channels, name=houseChannelName[1] + "-rp")
+            await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
+            await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
+
             await channel.send(worked)
+
         else:
-            await sendErrpr("aborted", channel)
+            await sendError("aborted", channel)
 
     elif command in ["user", "player"]:
         if staff == 0: await sendError("Staff only.", channel) ; return 0
@@ -702,7 +732,10 @@ async def on_message(message):
         await channel.send(request)
 
     elif command in ["history"]:
-        if staff == 0: await sendError("Staff only.", channel) ; return 0
+        if staff == 0:
+            request = db.travelHistory(nickName)
+            await channel.send(request)
+            return 0
 
         await sendRequest("User : (all for all)", channel)
         user = await client.wait_for('message', check=lambda response: response.author == message.author)
@@ -710,13 +743,59 @@ async def on_message(message):
 
         # if user == "all" : handle for all users
 
-        request = db.travelHistory(member)
+        request = db.travelHistory(user)
         await channel.send(request)
         return 0
 
+    elif command in ["man", "manual", "help"]:
+        category = param[1]
+        if param[1] == "None":
+            embed=discord.Embed(title="Manual", description="Command Table :", color=0xdd7b28)
+            embed.add_field(name="General : ", value="General commands, lists etc\n--> "+BOT_PREFIX+"man general", inline=False)
+            embed.add_field(name="Game : ", value="House and Players related\n--> "+BOT_PREFIX+"man game", inline=False)
+            embed.add_field(name="Staff : ", value="Staff related\n--> "+BOT_PREFIX+"man staff", inline=False)
+        elif param[1].lower() == "general":
+            embed=discord.Embed(title="Manual", description="Category General :", color=0xc5bcc5)
+            embed.add_field(name=BOT_PREFIX+"listStaff", value="List Staff\nAliases : "+BOT_PREFIX+"None", inline=False)
+            embed.add_field(name=BOT_PREFIX+"listHouses", value="List Houses\nAliases : "+BOT_PREFIX+"list1", inline=False)
+            embed.add_field(name=BOT_PREFIX+"listPlayers", value="List Players\nAliases : "+BOT_PREFIX+"list2", inline=False)
+            embed.add_field(name=BOT_PREFIX+"listGuilds", value="List Guilds\nAliases : "+BOT_PREFIX+"list3", inline=False)
+            embed.add_field(name=BOT_PREFIX+"items", value="List items and prices in shop\nAliases : "+BOT_PREFIX+"list4", inline=False)
+
+        elif param[1].lower() == "game":
+            embed=discord.Embed(title="Manual", description="Category Game :", color=0x8ae1c2)
+            embed.add_field(name=BOT_PREFIX+"buy CHOICE AMOUNT", value="HOUSE LEADER ONLY\nBuy things from the inventory\nAliases : "+BOT_PREFIX+"shop", inline=False)
+            embed.add_field(name=BOT_PREFIX+"send HOUSE_TO AMOUNT", value="HOUSE LEADER ONLY\nSend money to another house\nAliases : "+BOT_PREFIX+"pay", inline=False)
+            embed.add_field(name=BOT_PREFIX+"change", value="HOUSE LEADER ONLY\nChange taxes and army\nAliases : "+BOT_PREFIX+"None", inline=False)
+            embed.add_field(name=BOT_PREFIX+"stats", value="Detailed statistics of your house\nAliases : "+BOT_PREFIX+"populatin", inline=False)
+            embed.add_field(name=BOT_PREFIX+"inventory", value="List items you bought\nAliases : "+BOT_PREFIX+"stuff", inline=False)
+            embed.add_field(name=BOT_PREFIX+"me ( change guards AMOUNT(max3 or 5 for house leader) )", value="Details about your character and change guards\nAliases : "+BOT_PREFIX+"personal", inline=False)
+            embed.add_field(name=BOT_PREFIX+"travel", value="Log your travel for staff\nAliases : "+BOT_PREFIX+"move", inline=False)
+
+            embed.add_field(name=BOT_PREFIX+"guild", value="GUILD MEMBERS ONLY\nAliases : "+BOT_PREFIX+"guildInfo", inline=False)
+
+        elif param[1].lower() == "staff":
+            embed=discord.Embed(title="Manual", description="Category Staff :", color=0xffffff)
+            embed.add_field(name=BOT_PREFIX+"init_house HOUSE_NAME", value="Create a new house\nAliases : "+BOT_PREFIX+"init1", inline=False)
+            embed.add_field(name=BOT_PREFIX+"init_user", value="Create  a new User\nAliases : "+BOT_PREFIX+"init2", inline=False)
+            embed.add_field(name=BOT_PREFIX+"user", value="Get Statistics of User\nAliases : "+BOT_PREFIX+"player", inline=False)
+            embed.add_field(name=BOT_PREFIX+"grep HOUSE_NAME VALUE", value="Grab a specific value\nAliases : "+BOT_PREFIX+"grab", inline=False)
+            embed.add_field(name=BOT_PREFIX+"recalibrate", value="Recalibrate and recalculate economy section\nAliases : "+BOT_PREFIX+"fuck", inline=False)
+            embed.add_field(name=BOT_PREFIX+"update", value="Update all houses and players\nAliases : "+BOT_PREFIX+"None", inline=False)
+            embed.add_field(name=BOT_PREFIX+"recalibrate", value="Recalibrate and recalculate economy section\nAliases : "+BOT_PREFIX+"fuck", inline=False)
+            embed.add_field(name=BOT_PREFIX+"merge HOUSE_FROM HOUSE_TO", value="Merge two houses\nAliases : "+BOT_PREFIX+"None", inline=False)
+            embed.add_field(name=BOT_PREFIX+"changeHouse HOUSE_NAME VALUE NEWVALUE", value="Change house value\nAliases : "+BOT_PREFIX+"staff1", inline=False)
+            embed.add_field(name=BOT_PREFIX+"changePlayer", value="Change Player value\nAliases : "+BOT_PREFIX+"staff2", inline=False)
+
+        else:
+            await sendError("No Manual Entry.", channel)
+            return 0
+
+        await channel.send(embed=embed)
+
     # everything failed
     else:
-        await sendError("Command not found", channel)
+        await sendError("Command not found, Use "+BOT_PREFIX+"man/manual to get help", channel)
 
 
 
