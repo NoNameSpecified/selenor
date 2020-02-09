@@ -44,7 +44,7 @@ staffMembers = ["Kendrik", "Faerix", "TheFlightEnthousiast", "birb", "avo"]
 powerRoles = ["lady", "lord", "mayor", "king", "hand", "house leader"]
 BOT_PREFIX = ("]")
 # Oof close your eyes please !
-token = "Njc1NjU0ODM4NDk5MDE2NzQ1.Xj6SyA.WUAvoNFCGj5E03_aSwCJC8HHNTo"
+token = "ey"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
