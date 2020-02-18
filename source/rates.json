@@ -6,7 +6,8 @@
         "armySalary": 100,
         "lowerClassTaxMax" : 60,
         "middleClassTaxMax" : 100,
-        "upperClassTaxMax" : 200
+        "upperClassTaxMax" : 200,
+        "queen-fucking-high-taxes": 0.18
     },
 
     "shop": {
