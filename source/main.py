@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database2.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "Njc1NjU0ODM4NDk5MDE2NzQ1.Xk5cpA.XEkfDeeA_6DROVD16lG3OylhAeo"
+token = "Njc1NjU0ODM4NDk5MDE2NzQ1.Xk58yg.yOxJWqf3RWyU6CCYndB9PXI-cc8"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -889,18 +889,45 @@ async def on_message(message):
         await sendEmbed("Sorted from higher to lower :", embedReport, channel)
         await channel.send(message.author.mention)
         await sendEmbed(nickName, "Player 0 ("+ players[0] +") attacks who (ENTER ID)", channel)
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)      
+        answer = await client.wait_for('message', check=lambda response: response.author == message.author)   
+       
         try:
             firstAttackID = int(answer.content)
-            if firstAttackID in len(players):
+            print("firstAttackID")
+            x = range(len(players))
+            print(x)
+            if firstAttackID in x:
                pass
             else:
                 await sendError("Unproper ID given", channel)
                 return 0
-        except:
+        except Exception as e:
+            print(e)
             await sendError("Unproper ID given", channel)
             return 0
+
         await sendEmbed("LETS GO", players[firstAttackID] , channel)
+
+        tryAttack = random.randint(1, 21)
+        print(tryAttack, rankedStats[0])
+        if tryAttack >= rankedStats[0]:
+            await sendEmbed("Attack failed", "Very sad." , channel)
+        else:
+            await sendEmbed("Attack Succeeded", players[0] + " attacks " + players[firstAttackID], channel)
+        
+        await sendEmbed(players[firstAttackID], "DODGE / COUNTER" , channel)
+        false = True
+        while false:
+            answer = await client.wait_for('message', check=lambda response: response.author == message.author)   
+            if answer.content.lower() in ["dodge", "counter", "abort"]:
+                ripost = answer.content.lower()
+                if riport == "abort":
+                    return 0
+                break
+            else:
+                await sendError("either dodge or counter (or abort)", channel)
+
+
 
 
 
