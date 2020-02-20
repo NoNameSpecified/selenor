@@ -37,12 +37,9 @@ INFO :
 
 # init json handling and discord
 db = house_database_handler("database2.json")
-# wow the first staff guy seems really cool, hes probably the best staff, read all the rules and all
-staffMembers = ["Kendrik", "Faerix", "TheFlightEnthousiast", "birb", "avo"]
-houseManagingPermissionRoles = ["lady", "lord", "mayor", "king", "hand", "house leader"]
-BOT_PREFIX = ("]", "?")
+BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "Njc1NjU0ODM4NDk5MDE2NzQ1.Xj_TVw.es6G6netpQPQtVafR9XjMEKVd0U"
+token = "Njc1NjU0ODM4NDk5MDE2NzQ1.Xk5cpA.XEkfDeeA_6DROVD16lG3OylhAeo"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -70,9 +67,9 @@ async def sendRequest(request=" ", channel="REE"):
     embed=discord.Embed(title="Request", description=request, color=choice(colors))
     await channel.send(embed=embed)
 
-async def sendEmbed(title="Aha", channel="REE"):
+async def sendEmbed(title="Aha", description="...", channel="REE"):
     colors = [0xe03ca5, 0xdd7b28, 0x60c842, 0x8ae1c2, 0x008c5a, 0xc5bcc5]
-    embed=discord.Embed(title=title, description="...", color=choice(colors))
+    embed=discord.Embed(title=title, description=description, color=choice(colors))
     await channel.send(embed=embed)
 
 # ~~~ set custom status ~~~
@@ -819,6 +816,93 @@ async def on_message(message):
             return 0
 
         await channel.send(embed=embed)
+        
+        """
+
+        // GAME THINGS (fights and all)
+                Spartians ! Lay down your weapons !
+            /| ________________   
+        O|===|* >________________>
+            \|
+
+        """
+
+    elif command in ["fight", "wwe"]:
+        if staffMemberRequest == 0: await sendError("Staff only.", channel) ; return 0
+        
+        # init variables
+        anotherOne, index, players, playerAttacks = True, -1, [], []
+        print(param[1])
+        if param[1] == "usual":
+            anotherOne = False
+            players = ["Towa of the Klan", "Arya Anor", "Doubledore Piast", "Petter Berg"]
+
+        # get all members in fight
+        print(anotherOne)
+        while anotherOne:
+            index += 1
+            await sendRequest("Player " + str(index) + ": name", channel)
+            answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+            if answer.content.lower() in ["abort", "stop"]:
+                return -1
+            if answer.content.lower() in ["none", "no"]:
+                anotherOne == False
+                break
+            players.append(answer.content.lower())
+
+        # grep all attackStats
+        for i in range(len(players)):
+            request = (db.grepValue(players[i], "attackStats", "players"))
+            print(request)
+            try:
+                playerAttacks.append(int(request))
+            except:
+                await sendError("Player Error", channel)
+        # backup, just in case
+        rankedStats = playerAttacks
+
+        # custom sort, we sort the attack stats and player list appropriately
+        i = -1
+        embedReport = ""
+        while i <= len(playerAttacks):
+            i += 1
+            try:
+                if rankedStats[i] < rankedStats[i+1]:
+                    # save the higher stats one into buffer
+                    saved = rankedStats[i]
+                    # this one has lower stats, so move him right
+                    rankedStats[i] = rankedStats[i+1]
+                    # the higher one (saved) takes that position
+                    rankedStats[i+1] = saved
+                    # repeat process, but for the player-names
+                    saved = players[i]
+                    players[i] = players[i+1]
+                    players[i+1] = saved
+
+                    i = -1
+            except:
+                pass
+        
+        for i in range(len(rankedStats)):
+            embedReport = embedReport + "\n" + "Player ["+str(i)+"] : "+str(players[i])+"\n    Attack Stats : " + str(rankedStats[i])+"\n"
+        
+        await sendEmbed("Sorted from higher to lower :", embedReport, channel)
+        await channel.send(message.author.mention)
+        await sendEmbed(nickName, "Player 0 ("+ players[0] +") attacks who (ENTER ID)", channel)
+        answer = await client.wait_for('message', check=lambda response: response.author == message.author)      
+        try:
+            firstAttackID = int(answer.content)
+            if firstAttackID in len(players):
+               pass
+            else:
+                await sendError("Unproper ID given", channel)
+                return 0
+        except:
+            await sendError("Unproper ID given", channel)
+            return 0
+        await sendEmbed("LETS GO", players[firstAttackID] , channel)
+
+
 
     # everything failed
     else:
