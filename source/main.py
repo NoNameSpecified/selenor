@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database2.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "Njc1NjU0ODM4NDk5MDE2NzQ1.Xk58yg.yOxJWqf3RWyU6CCYndB9PXI-cc8"
+token = "n o"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -90,10 +90,16 @@ async def on_message(message):
 
     i = 1
     param = ["None", "None", "None", "None"]
+
     for i in range(len(command)):
         print(param[i])
         param[i] = command[i]
     print("Used with Parameters", param)
+
+    # for example, prefix is ?, if only writes ? with no intention to use bot
+    if param[0] == "None":
+        return 0
+
     command = command[0]
     # to use after
     channel = message.channel
@@ -821,7 +827,7 @@ async def on_message(message):
 
         // GAME THINGS (fights and all)
                 Spartians ! Lay down your weapons !
-            /| ________________   
+            /|  __________________   
         O|===|* >________________>
             \|
 
@@ -893,6 +899,8 @@ async def on_message(message):
        
         try:
             firstAttackID = int(answer.content)
+            playerRiposter = players[firstAttackID]
+            playerAttack = rankedStats[0]
             print("firstAttackID")
             x = range(len(players))
             print(x)
@@ -906,26 +914,44 @@ async def on_message(message):
             await sendError("Unproper ID given", channel)
             return 0
 
-        await sendEmbed("LETS GO", players[firstAttackID] , channel)
+        await sendEmbed("LETS GO", playerRiposter , channel)
 
         tryAttack = random.randint(1, 21)
-        print(tryAttack, rankedStats[0])
-        if tryAttack >= rankedStats[0]:
+        print(tryAttack, playerAttack)
+        if tryAttack >= playerAttack:
             await sendEmbed("Attack failed", "Very sad." , channel)
         else:
-            await sendEmbed("Attack Succeeded", players[0] + " attacks " + players[firstAttackID], channel)
+            await sendEmbed("Attack Succeeded", players[0] + " attacks " + playerRiposter, channel)
         
-        await sendEmbed(players[firstAttackID], "DODGE / COUNTER" , channel)
+        await sendEmbed(playerRiposter, "DODGE / COUNTER" , channel)
         false = True
         while false:
             answer = await client.wait_for('message', check=lambda response: response.author == message.author)   
             if answer.content.lower() in ["dodge", "counter", "abort"]:
                 ripost = answer.content.lower()
-                if riport == "abort":
+                if ripost == "abort":
                     return 0
                 break
             else:
                 await sendError("either dodge or counter (or abort)", channel)
+        
+        if ripost == "dodge":
+            usedValue = db.grepValue(playerRiposter, "dexterity","players")
+        elif ripost == "counter":
+            usedValue = db.grepValue(playerRiposter, "counterStats","players")
+        print(usedValue)
+
+        tryAttack = random.randint(1, 21)
+        
+        print(tryAttack, playerAttack)
+        if tryAttack >= playerAttack:
+            await sendEmbed("Ripost", ripost + " failed..", channel)
+        else:
+            await sendEmbed("Ripost", ripost + " worked !", channel)
+
+
+
+
 
 
 
