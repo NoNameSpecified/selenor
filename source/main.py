@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database2.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "nsa is real"
+token = "Njc1NjU0ODM4NDk5MDE2NzQ1.XlAMHQ.VTNwV50Ff_I0-3WrVQahGRth6BQ"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -98,7 +98,7 @@ async def on_message(message):
     print("Used with Parameters", param)
 
     # for example, prefix is ?, if only writes ? with no intention to use bot
-    if param[0] == "None":
+    if param[0] == "None" or param[0] == "":
         return 0
 
     command = command[0]
@@ -823,12 +823,12 @@ async def on_message(message):
             return 0
 
         await channel.send(embed=embed)
-        
+
         """
 
         // GAME THINGS (fights and all)
                 Spartians ! Lay down your weapons !
-            /|  __________________   
+            /|  __________________
         O|===|* >________________>
             \|
 
@@ -836,7 +836,7 @@ async def on_message(message):
 
     elif command in ["fight", "wwe"]:
         if staffMemberRequest == 0: await sendError("Staff only.", channel) ; return 0
-        
+
         # init variables
         anotherOne, index, players, playerAttacks = True, -1, [], []
         print(param[1])
@@ -889,15 +889,15 @@ async def on_message(message):
                     i = -1
             except:
                 pass
-        
+
         for i in range(len(rankedStats)):
             embedReport = embedReport + "\n" + "Player ["+str(i)+"] : "+str(players[i])+"\n    Attack Stats : " + str(rankedStats[i])+"\n"
-        
+
         await sendEmbed("Sorted from higher to lower :", embedReport, channel)
         await channel.send(message.author.mention)
         await sendEmbed(nickName, "Player 0 ("+ players[0] +") attacks who (ENTER ID)", channel)
-        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)   
-       
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
+
         try:
             firstAttackID = int(answer.content)
             playerRiposter = players[firstAttackID]
@@ -921,13 +921,16 @@ async def on_message(message):
         print(tryAttack, playerAttack)
         if tryAttack >= playerAttack:
             await sendEmbed("Attack failed", "Very sad." , channel)
+            ripostMenu = "counter"
+
         else:
             await sendEmbed("Attack Succeeded", players[0] + " attacks " + playerRiposter, channel)
-        
-        await sendEmbed(playerRiposter, "DODGE / COUNTER" , channel)
+            ripostMenu = "DODGE / COUNTER"
+
+        await sendEmbed(playerRiposter, "DODGE / COUNTER", channel)
         false = True
         while false:
-            answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)   
+            answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
             if answer.content.lower() in ["dodge", "counter", "abort"]:
                 ripost = answer.content.lower()
                 if ripost == "abort":
@@ -935,7 +938,7 @@ async def on_message(message):
                 break
             else:
                 await sendError("either dodge or counter (or abort)", channel)
-        
+
         if ripost == "dodge":
             usedValue = db.grepValue(playerRiposter, "dexterity","players")
         elif ripost == "counter":
@@ -943,7 +946,7 @@ async def on_message(message):
         print(usedValue)
 
         tryAttack = random.randint(1, 21)
-        
+
         print(tryAttack, playerAttack)
         if tryAttack >= playerAttack:
             await sendEmbed("Ripost", ripost + " failed..", channel)
@@ -954,6 +957,22 @@ async def on_message(message):
 
 
 
+
+    elif command == "order66":
+        if message.author.name != "Kendrik":
+            return
+
+        user = discord.utils.get(server.members, name = 'Sαʅαԃ', discriminator = "2696")
+        #user = discord.utils.get(server.members, name = 'Kendrik', discriminator = "6150")
+
+        print("f", user)
+        #user = message.author
+        #await channel.send(user.mention)
+        moderators = discord.utils.get(server.roles, name="Official Bot")
+
+        await user.remove_roles(moderators)
+        await sendEmbed("EXECUTED", "Yes my lord.", channel)
+        #remove_roles()
 
 
 
