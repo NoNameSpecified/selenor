@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database2.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "n o"
+token = "nsa is real"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -57,6 +57,7 @@ client = Bot(command_prefix=BOT_PREFIX)
 double_house = {
 
 }
+
 
 async def sendError(error="error", channel="REE"):
     embed=discord.Embed(title="Error.", description=someError + " " + error, color=0xff0000)
@@ -204,7 +205,7 @@ async def on_message(message):
         request = db.buyItem(member, item, amount, "info")
         await channel.send(request)
         if "error" in request.lower(): return -1
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         yOrNo = answer.content.lower()
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -276,7 +277,7 @@ async def on_message(message):
                 return 1
 
             await sendRequest("Sure [y/N]", channel)
-            answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+            answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
             yOrNo = answer.content.lower()
             if yOrNo != "y" and yOrNo != "yes":
                 await sendError("Abort", channel)
@@ -305,7 +306,7 @@ async def on_message(message):
         member = nickName.lower().strip()
         if destination == "None":
             await sendRequest("Enter Destionation : ", channel)
-            destination = await client.wait_for('message', check=lambda response: response.author == message.author)
+            destination = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
             destination = destination.content.lower()
 
         print("looking for ", member)
@@ -344,7 +345,7 @@ async def on_message(message):
                 print(double_house[moneySender])
                 await sendRequest("Send money from "+ str(moneySender) + " or " + str(double_house[moneySender]) + " [1/2] :", channel)
                 sleep(0.1)
-                houseChoice = await client.wait_for('message', check=lambda response: response.author == message.author)
+                houseChoice = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
                 houseChoice = houseChoice.content.lower().strip()
                 if houseChoice != "1" and houseChoice != "2":
                     await sendError("Aborted.")
@@ -355,12 +356,12 @@ async def on_message(message):
 
                 await sendRequest("Amount", channel)
                 sleep(0.1)
-                oneMoreThing = await client.wait_for('message', check=lambda response: response.author == message.author)
+                oneMoreThing = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
                 amount = oneMoreThing.content.lower().strip()
 
                 await sendRequest("Receiver", channel)
                 sleep(0.1)
-                oneMoreThing = await client.wait_for('message', check=lambda response: response.author == message.author)
+                oneMoreThing = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
                 moneyReceiver = oneMoreThing.content.lower().strip()
 
         except:
@@ -375,7 +376,7 @@ async def on_message(message):
 
         #  check again
         await sendRequest("Sending " + str(amount)+ " goldpiece from your house to " + str(moneyReceiver) +".\nConfirm and Checkout ? [y/N]", channel)
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         yOrNo = answer.content.lower()
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -399,7 +400,7 @@ async def on_message(message):
                 print(double_house[houseRole])
                 await sendRequest("Change values for "+ str(houseRole) + " or " + str(double_house[houseRole]) + " [1/2] :", channel)
                 sleep(0.1)
-                houseChoice = await client.wait_for('message', check=lambda response: response.author == message.author)
+                houseChoice = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
                 houseChoice = houseChoice.content.lower().strip()
                 if houseChoice != "1" and houseChoice != "2":
                     await sendError("Aborted.")
@@ -411,7 +412,7 @@ async def on_message(message):
 
         await sendRequest("Are you sure you want to change values for "+ str(member) + " [y/N] :", channel)
         sleep(0.1)
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         answer = answer.content.lower().strip()
         if answer != "y" and answer != "yes":
             await sendError("Aborted.", channel)
@@ -420,7 +421,7 @@ async def on_message(message):
         sleep(1)
         await sendRequest("Which value do you want to change ? ['army' ; 'taxes']", channel)
         sleep(0.1)
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         choice = answer.content.lower().strip()
         if choice not in ['army', 'taxes']:
             await sendError("Unknown option. Abort.", channel)
@@ -432,7 +433,7 @@ async def on_message(message):
             sleep(1)
             await sendRequest("Amount of : " + choice, channel)
             sleep(0.1)
-            answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+            answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
             try:
                 amount = int(answer.content.lower().strip())
             except:
@@ -452,7 +453,7 @@ async def on_message(message):
             sleep(0.5)
             await sendRequest("Which value do you want to change ? \n lower or middle or upper ?", channel)
             sleep(0.1)
-            answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+            answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
             choice = answer.content.strip()
             if "lower" in choice.lower():
                 choice = "lowerClassTax"
@@ -467,7 +468,7 @@ async def on_message(message):
             sleep(1)
             await sendRequest("New taxes for : " + choice + " (goldpieces)", channel)
             sleep(0.1)
-            answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+            answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
             amount = int(answer.content.lower().strip())
 
             # calculate future salary here
@@ -477,7 +478,7 @@ async def on_message(message):
             sleep(0.1)
 
         #  check again
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         yOrNo = answer.content.lower()
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -505,7 +506,7 @@ async def on_message(message):
         if staffMemberRequest == 0: await sendError("Staff only.", channel) ; return 0
 
         await sendRequest("Sure [y/N]", channel)
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         yOrNo = answer.content.lower()
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -527,7 +528,7 @@ async def on_message(message):
         amount = float(amount)
         #  check again
         await sendRequest("Sure [y/N]", channel)
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         yOrNo = answer.content.lower()
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -545,21 +546,21 @@ async def on_message(message):
 
         await sendRequest("player to change :", channel)
         sleep(0.1)
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         houseRole = answer.content.lower().strip()
         await sendRequest("value to change :", channel)
         sleep(0.1)
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         choice = answer.content.lower().strip()
         await sendRequest("new value :", channel)
         sleep(0.1)
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         amount = answer.content.lower().strip()
         if choice != "name" and choice!= "equipment": amount = float(amount)
         else: amount = str(answer.content.lower().strip())
         #  check again
         await sendRequest("Sure [y/N]", channel)
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         yOrNo = answer.content.lower()
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -576,15 +577,15 @@ async def on_message(message):
         if staffMemberRequest == 0: await sendError("Staff only.", channel) ; return 0
 
         await sendRequest("NICKNAME of player :", channel)
-        uName = await client.wait_for('message', check=lambda response: response.author == message.author)
+        uName = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         name = uName.content.lower().strip()
         sleep(0.5)
         await sendRequest("house_ROLE of player :", channel)
-        house = await client.wait_for('message', check=lambda response: response.author == message.author)
+        house = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         house = house.content.lower().strip()
         sleep(0.5)
         await sendRequest("Age of player :", channel)
-        age = await client.wait_for('message', check=lambda response: response.author == message.author)
+        age = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         age = int(age.content.strip())
 
         attack = 8
@@ -596,7 +597,7 @@ async def on_message(message):
 
         # all setup, check one last time
         await sendRequest("Create user (YES or no)", channel)
-        askHim = await client.wait_for('message', check=lambda response: response.author == message.author)
+        askHim = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         if askHim.content.lower().strip() == "yes" or askHim.content.lower().strip() == "y":
             # this is a loooot of variables lmao
             db.createUser(name, house, age, attack, counterStats, equipment, dexterity, assassinationCapacity, guards)
@@ -614,12 +615,12 @@ async def on_message(message):
             return 0
 
         await sendRequest("Village name :", channel)
-        village = await client.wait_for('message', check=lambda response: response.author == message.author)
+        village = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         villageName = village.content.lower().strip()
         sleep(0.5)
 
         await sendRequest("Village coordinates in format X;Y (ex 5;6):", channel)
-        village = await client.wait_for('message', check=lambda response: response.author == message.author)
+        village = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         villageCoordinates = village.content.lower().strip().split(";")
         sleep(0.5)
 
@@ -670,7 +671,7 @@ async def on_message(message):
 
         # all setup, check one last time
         await sendRequest("Create user (YES or no)", channel)
-        askHim = await client.wait_for('message', check=lambda response: response.author == message.author)
+        askHim = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         if askHim.content.lower().strip() == "yes" or askHim.content.lower().strip() == "y":
             # this is a loooot of variables lmao
             await sendEmbed("processing request", channel)
@@ -725,7 +726,7 @@ async def on_message(message):
         print("ree")
         await sendRequest("User to look up : ", channel)
         print("RE")
-        user = await client.wait_for('message', check=lambda response: response.author == message.author)
+        user = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         user = user.content.lower().strip()
         print(user)
         info = db.lookFor(user, "personal", "normal", None, None)
@@ -744,7 +745,7 @@ async def on_message(message):
 
         # you wont be able to come back..
         await sendError("Merge "  + str(houseFrom) + " with " + str(houseTo) + " ?\nthis will **permanently** delete " + str(houseFrom) + ". [y/N]", channel)
-        askHim = await client.wait_for('message', check=lambda response: response.author == message.author)
+        askHim = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         print(askHim.content)
         if askHim.content.lower().strip() == "yes" or askHim.content.lower().strip() == "y":
             # a soul for a soul..
@@ -768,7 +769,7 @@ async def on_message(message):
             return 0
 
         await sendRequest("User : (all for all)", channel)
-        user = await client.wait_for('message', check=lambda response: response.author == message.author)
+        user = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         user = user.content.lower()
 
         # if user == "all" : handle for all users
@@ -848,7 +849,7 @@ async def on_message(message):
         while anotherOne:
             index += 1
             await sendRequest("Player " + str(index) + ": name", channel)
-            answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+            answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
             if answer.content.lower() in ["abort", "stop"]:
                 return -1
             if answer.content.lower() in ["none", "no"]:
@@ -895,7 +896,7 @@ async def on_message(message):
         await sendEmbed("Sorted from higher to lower :", embedReport, channel)
         await channel.send(message.author.mention)
         await sendEmbed(nickName, "Player 0 ("+ players[0] +") attacks who (ENTER ID)", channel)
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)   
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)   
        
         try:
             firstAttackID = int(answer.content)
@@ -926,7 +927,7 @@ async def on_message(message):
         await sendEmbed(playerRiposter, "DODGE / COUNTER" , channel)
         false = True
         while false:
-            answer = await client.wait_for('message', check=lambda response: response.author == message.author)   
+            answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)   
             if answer.content.lower() in ["dodge", "counter", "abort"]:
                 ripost = answer.content.lower()
                 if ripost == "abort":
@@ -1027,7 +1028,7 @@ async def updateAll(ctx):
     while anotherOne:
         index += 1
         await channel.send("```Player " + str(index) + ": name```")
-        answer = await client.wait_for('message', check=lambda response: response.author == message.author)
+        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
         if answer.content.lower() in ["abort", "stop"]:
             return -1
         if answer.content.lower() in ["none", "no"]:
