@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database2.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "Njc1NjU0ODM4NDk5MDE2NzQ1.XlAMHQ.VTNwV50Ff_I0-3WrVQahGRth6BQ"
+token = "Njc1NjU0ODM4NDk5MDE2NzQ1.XlDmXQ.jSZzn4c5Gx--3jwkdi3GGqkezuw"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -911,12 +911,15 @@ async def on_message(message):
             try:
                 firstAttackID = int(answer.content)
                 playerRiposter = players[firstAttackID]
+                playerRiposerHealth = playerHealth[firsAttackID]
                 playerAttack = rankedStats[outerIndex]
+                playerAttackHealth = playerHealth[outerIndex]
+
                 print("firstAttackID")
                 x = range(len(players))
                 print(x)
                 if firstAttackID in x:
-                pass
+                    pass
                 else:
                     await sendError("Unproper ID given", channel)
                     return 0
@@ -940,7 +943,7 @@ async def on_message(message):
                 ripostMenu = "DODGE / COUNTER"
 
             await sendEmbed(playerRiposter, "DODGE / COUNTER", channel)
-            
+
             false = True
             while false:
                 answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
@@ -958,15 +961,18 @@ async def on_message(message):
                 usedValue = db.grepValue(playerRiposter, "counterStats","players")
             print(usedValue)
 
-            tryAttack = random.randint(1, 21)
+            tryDefend = random.randint(1, 21)
 
             print(tryAttack, playerAttack)
             if tryAttack >= playerAttack:
                 await sendEmbed("Ripost", ripost + " failed..", channel)
                 if attackStatus == True:
-
+                    playerRiposterHealth = 100 - 10*tryAttack
             else:
                 await sendEmbed("Ripost", ripost + " worked !", channel)
+                if attackStatus == False and ripost == "counter":
+                    playerAttackHealth = 100 - 10*tryDefend
+
 
 
 
