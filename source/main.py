@@ -828,7 +828,7 @@ async def on_message(message):
 
         // GAME THINGS (fights and all)
                 Spartians ! Lay down your weapons !
-            /|  __________________
+            /| ________________
         O|===|* >________________>
             \|
 
@@ -838,8 +838,9 @@ async def on_message(message):
         if staffMemberRequest == 0: await sendError("Staff only.", channel) ; return 0
 
         # init variables
-        anotherOne, index, players, playerAttacks = True, -1, [], []
+        anotherOne, index, players, playerAttacks, playerHealth = True, -1, [], [], []
         print(param[1])
+        # default players for test purpose 
         if param[1] == "usual":
             anotherOne = False
             players = ["Towa of the Klan", "Arya Anor", "Doubledore Piast", "Petter Berg"]
@@ -889,69 +890,83 @@ async def on_message(message):
                     i = -1
             except:
                 pass
-
+        
         for i in range(len(rankedStats)):
-            embedReport = embedReport + "\n" + "Player ["+str(i)+"] : "+str(players[i])+"\n    Attack Stats : " + str(rankedStats[i])+"\n"
+            playerHealth[i] = 100
+            embedReport = embedReport + "\n" + "Player ["+str(i)+"] : "+str(players[i])+"\n    Attack Stats : " + str(rankedStats[i])+ +"\n    Health : " + str(playerHealth[i]) +"\n"
 
         await sendEmbed("Sorted from higher to lower :", embedReport, channel)
         await channel.send(message.author.mention)
-        await sendEmbed(nickName, "Player 0 ("+ players[0] +") attacks who (ENTER ID)", channel)
+        await sendEmbed(nickName, "Player  ["+str(outsideIndex)+"] ("+ players[0] +") attacks who (ENTER ID)", channel)
         answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
 
-        try:
-            firstAttackID = int(answer.content)
-            playerRiposter = players[firstAttackID]
-            playerAttack = rankedStats[0]
-            print("firstAttackID")
-            x = range(len(players))
-            print(x)
-            if firstAttackID in x:
-               pass
-            else:
+        """
+        the fight goes in rounds, first highest ranked player attacks who he wants, then the second then third etc etc
+        """
+        stillAlive = True
+        outerIndex = -1
+        while stillAlive:
+            outerIndex += 1
+
+            try:
+                firstAttackID = int(answer.content)
+                playerRiposter = players[firstAttackID]
+                playerAttack = rankedStats[outerIndex]
+                print("firstAttackID")
+                x = range(len(players))
+                print(x)
+                if firstAttackID in x:
+                pass
+                else:
+                    await sendError("Unproper ID given", channel)
+                    return 0
+            except Exception as e:
+                print(e)
                 await sendError("Unproper ID given", channel)
                 return 0
-        except Exception as e:
-            print(e)
-            await sendError("Unproper ID given", channel)
-            return 0
 
-        await sendEmbed("LETS GO", playerRiposter , channel)
+            await sendEmbed("LETS GO", playerRiposter , channel)
 
-        tryAttack = random.randint(1, 21)
-        print(tryAttack, playerAttack)
-        if tryAttack >= playerAttack:
-            await sendEmbed("Attack failed", "Very sad." , channel)
-            ripostMenu = "counter"
+            tryAttack = random.randint(1, 21)
+            print(tryAttack, playerAttack)
+            if tryAttack >= playerAttack:
+                await sendEmbed("Attack failed", "Very sad." , channel)
+                ripostMenu = "counter"
+                attackStatus = False
 
-        else:
-            await sendEmbed("Attack Succeeded", players[0] + " attacks " + playerRiposter, channel)
-            ripostMenu = "DODGE / COUNTER"
-
-        await sendEmbed(playerRiposter, "DODGE / COUNTER", channel)
-        false = True
-        while false:
-            answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
-            if answer.content.lower() in ["dodge", "counter", "abort"]:
-                ripost = answer.content.lower()
-                if ripost == "abort":
-                    return 0
-                break
             else:
-                await sendError("either dodge or counter (or abort)", channel)
+                await sendEmbed("Attack Succeeded", players[outerIndex] + " attacks " + playerRiposter, channel)
+                attackStatus = True
+                ripostMenu = "DODGE / COUNTER"
 
-        if ripost == "dodge":
-            usedValue = db.grepValue(playerRiposter, "dexterity","players")
-        elif ripost == "counter":
-            usedValue = db.grepValue(playerRiposter, "counterStats","players")
-        print(usedValue)
+            await sendEmbed(playerRiposter, "DODGE / COUNTER", channel)
+            
+            false = True
+            while false:
+                answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
+                if answer.content.lower() in ["dodge", "counter", "abort"]:
+                    ripost = answer.content.lower()
+                    if ripost == "abort":
+                        return 0
+                    break
+                else:
+                    await sendError("either dodge or counter (or abort)", channel)
 
-        tryAttack = random.randint(1, 21)
+            if ripost == "dodge":
+                usedValue = db.grepValue(playerRiposter, "dexterity","players")
+            elif ripost == "counter":
+                usedValue = db.grepValue(playerRiposter, "counterStats","players")
+            print(usedValue)
 
-        print(tryAttack, playerAttack)
-        if tryAttack >= playerAttack:
-            await sendEmbed("Ripost", ripost + " failed..", channel)
-        else:
-            await sendEmbed("Ripost", ripost + " worked !", channel)
+            tryAttack = random.randint(1, 21)
+
+            print(tryAttack, playerAttack)
+            if tryAttack >= playerAttack:
+                await sendEmbed("Ripost", ripost + " failed..", channel)
+                if attackStatus == True:
+
+            else:
+                await sendEmbed("Ripost", ripost + " worked !", channel)
 
 
 
@@ -988,7 +1003,7 @@ async def on_message(message):
             o --|  filthy russians communists !! |
            \|/  |--------------------------------|
            / \
-           """
+        """
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~ berlin wall be like ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1016,69 +1031,3 @@ client.run(token)
 # bruh, 789 now at 18.01.20
 # hmm, 30.01.20 - 947 lines
 # actually, 1st february : doing a lot of optimization, so - 913 lines ! (nice)
-
-
-
-
-
-
-"""
-
-// GAME THINGS (fights and all)
-            Spartians ! Lay down your weapons !
-      /| ________________
-O|===|* >________________>
-      \|
-
-"""
-
-
-
-# ~~~ and his name is..... (john cena) ~~~
-@client.command("fight", pass_context=True, brief="update user", aliases=['Fight', 'wwe'])
-async def updateAll(ctx):
-    if message.author.name not in staffMembers:
-        await sendError("Hey ! Dont do this if you arent staff", channel)
-        return 1
-    # init variables
-    anotherOne, index, players, playerAttacks = True, -1, [], []
-
-    # get all members in fight
-    while anotherOne:
-        index += 1
-        await channel.send("```Player " + str(index) + ": name```")
-        answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith("#") == False)
-        if answer.content.lower() in ["abort", "stop"]:
-            return -1
-        if answer.content.lower() in ["none", "no"]:
-            anotherOne == False
-            break
-        players.append(answer.content.lower())
-
-    # grep all attackStats
-    for i in range(len(players)):
-        request = (db.grepValue(players[i], "attackStats", "players"))
-        print(request)
-        playerAttacks.append(int(request))
-    # backup, just in case
-    rankedStats = playerAttacks
-
-    # custom sort, we sort the attack stats and player list appropriately
-    i = -1
-    while i <= len(playerAttacks):
-      i += 1
-      try:
-        if rankedStats[i] < rankedStats[i+1]:
-          saved = rankedStats[i]
-          rankedStats[i] = rankedStats[i+1]
-          rankedStats[i+1] = saved
-
-          saved = players[i]
-          players[i] = players[i+1]
-          players[i+1] = saved
-
-          i = -1
-      except:
-        pass
-
-    await channel.send("```Sorted the players : ```" + str(players))
