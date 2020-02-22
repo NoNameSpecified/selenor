@@ -5,7 +5,6 @@ from test_db import *
 from time import sleep
 from random import choice
 
-
 # --------- Info and general informations -----------
 
 
