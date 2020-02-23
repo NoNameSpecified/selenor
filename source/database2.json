@@ -1,5 +1,60 @@
 {
-    "houses": [],
+    "houses": [
+        {
+            "name": "house_something",
+            "type": "major",
+            "totalPopulation": 0,
+            "natality": 0,
+            "childrenRate": 0,
+            "elderlyRate": 0,
+            "mortality": 0,
+            "popularity": 0.8,
+            "children": 0,
+            "elderly": 0,
+            "workingPopulation": 0,
+            "menPart": 0,
+            "womenPart": 0,
+            "men": 0,
+            "lowerClassRate": 0,
+            "upperClassRate": 0,
+            "lowerClassTax":  0,
+            "middleClassTax":  0,
+            "upperClassTax":  0,
+            "lowerClass":  0,
+            "middleClass":  0,
+            "upperClass":  0,
+            "army": 0,
+            "guildTax": 0,
+            "vassalTax": 0,
+            "lordTax": 0,
+            "income": 0,
+            "expenses": 0,
+            "totalGold":  0,
+            "knights": 0,
+            "guards": 0,
+            "squires": 0,
+            "cities": {
+                "name": {
+                    "coordinates": [
+                         0,
+                         0
+                    ],
+                    "population":  0,
+                    "menPart": 0.
+                    "womenPart": 0,
+                    "men":  0,
+                    "immigration": 0,
+                    "children":  0,
+                    "elderly":  0,
+                    "workingPopulation":  0,
+                    "natality": 0,
+                    "childrenRate": 0,
+                    "elderlyRate": 0,
+                    "mortality": 0
+                }
+            }
+        }
+    ],
     "players": [],
     "guilds": []
 }
