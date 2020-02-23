@@ -290,12 +290,13 @@ class house_database_handler:
 
     # automatically fetch all guards of a house combined.
     def calculate_guards(self, house):
+        houseName = "house_"+house
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
             guards = 0
             x = 0
             for i in range(len(data["players"])):
-                if " "+house in data["players"][i]["name"]:
+                if house in data["players"][i]["house"]:
                     x = x+1
                     guards = guards + int(data["players"][i]["guards"])
             return guards
@@ -399,18 +400,19 @@ class house_database_handler:
                 pass
 
         self.json_db_content["houses"].append({
-            "name" : uName, "population" : population,
-            "natality" : natality,
-            "childrenRate" : childrenRate,
-            "elderlyRate" : elderlyRate,
-            "mortality" : mortality,
+            "name" : uName,
+            "totalPopulation" : 0,
+            "natality" : 0,
+            "childrenRate" : 0,
+            "elderlyRate" : 0,
+            "mortality" : 0,
             "popularity" : popularity,
-            "children" : children,
-            "elderly" : elderly,
-            "workingPopulation" : workingPopulation,
-            "menPart" : menPart,
-            "womenPart" : womenPart,
-            "men" : men,
+            "children" : 0,
+            "elderly" : 0,
+            "workingPopulation" : 0,
+            "menPart" : 0,
+            "womenPart" : 0,
+            "men" : 0,
             "lowerClassRate" : lowerClassRate,
             "upperClassRate" : upperClassRate,
             "lowerClassTax" : lowerClassTax,
@@ -429,7 +431,21 @@ class house_database_handler:
             "knights" : knights,
             "guards" : guards,
             "squires" : squires,
-            "cities": {villageName: {"coordinates":villageCoordinates}}
+            "cities": {villageName: {
+                        "coordinates":villageCoordinates,
+                        "population" : population,
+                        "menPart" : menPart,
+                        "womenPart" : womenPart,
+                        "men" : men,
+                        "children" : children,
+                        "elderly" : elderly,
+                        "workingPopulation" : workingPopulation,
+                        "natality" : natality,
+                        "childrenRate" : childrenRate,
+                        "elderlyRate" : elderlyRate,
+                        "mortality" : mortality,
+                                    }
+                    }
         })
         # finish and write to file
         content = self.json_db_content
