@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database2.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "no"
+token = "NGA"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -633,39 +633,39 @@ async def on_message(message):
         if staffMemberRequest == 0: await sendError("Staff only.", channel) ; return 0
 
         house_name = param[1]
+        houseType = param[2]
 
         if house_name == "None":
             await sendError("Please enter a name too", channel)
             return 0
+        if houseType == "None" or houseType not in ["major", "minor"]:
+            await sendError("Please enter major/minor (determines immigration)", channel)
+            return 0
 
         await sendRequest("Village name :", channel)
-        village = await getInput(message)
-        village = village.lower()
+        villageName = await getInput(message)
 
-        villageName = village
         sleep(0.5)
 
         await sendRequest("Village coordinates in format X;Y (ex 5;6):", channel)
         village = await getInput(message)
 
         villageCoordinates = village.split(";")
-        sleep(0.5)
-        print(villageCoordinates)
-        villageCoordinates = (int(villageCoordinates[0]), int(villageCoordinates[1]))
-        print(villageCoordinates)
+        villageCoordinates = (int(villageCoordinates[0]), int(villageCoordinates[1]))#
         """
             calculating
         """
         # population
-        diceResult = db.dice(10, 20)
-        population = diceResult * 100
+        diceResult = db.dice(100, 20)
+        population = diceResult * 10
 
         natality = 5 / 100
-        childrenRate = db.dice(1, 10) / 100
-        elderlyRate = db.dice(1, 10) / 100
+        childrenRate = db.dice(1, 7) / 100
+        elderlyRate = db.dice(1, 7) / 100
         mortality = 5 / 100
         popularity = 80 / 100
-
+        if houseType == "major": immigration = 40 / 100
+        elif houseType == "minor": immigration = 10 / 100
         diceResult = db.dice(1, 20)
         menPart = (diceResult + 40) / 100
 
@@ -703,7 +703,7 @@ async def on_message(message):
         if askHim == "yes" or askHim == "y":
             # this is a loooot of variables lmao
             await sendEmbed("processing request", ". . .", channel)
-            request = db.createHouse(house_name, population, natality, childrenRate, elderlyRate, mortality, popularity, children, elderly, workingPopulation, menPart, womenPart, men, women, lowerClassRate, upperClassRate, lowerClassTax, middleClassTax, upperClassTax, lowerClass, middleClass, upperClass, army, guildTax, vassalTax, lordTax, income, expenses, totalGold, knights, guards, squires, villageName, villageCoordinates)
+            request = db.createHouse(house_name, population, natality, childrenRate, elderlyRate, mortality, popularity, children, elderly, workingPopulation, menPart, womenPart, men, women, lowerClassRate, upperClassRate, lowerClassTax, middleClassTax, upperClassTax, lowerClass, middleClass, upperClass, army, guildTax, vassalTax, lordTax, income, expenses, totalGold, knights, guards, squires, villageName, villageCoordinates, houseType, immigration)
             if "error" in request:
                 await sendError(request, channel)
                 return -1
@@ -711,16 +711,26 @@ async def on_message(message):
             # now we create the channels
             await server.create_category(house_name)
             await server.create_role(name=house_name)
-            await server.create_role(name=villageName)
-
+            x = await server.create_role(name="village-"+villageName)
+            print(x)
 
             newCategory = discord.utils.get(server.categories, name=house_name)
+
+            newRpRole = x
+            print("village-"+villageName, "\n", x, "\n", newRpRole)
             moderators = discord.utils.get(server.roles, name="Moderator")
             newHouseRole = discord.utils.get(server.roles, name=house_name)
-            newRpRole = discord.utils.get(server.roles, name=villageName)
-
+            print(newHouseRole)
+            print(newRpRole)
 
             houseChannelName = house_name.split("_")
+
+            await server.create_text_channel("Village-" + villageName + "-MENU", category=newCategory)
+            newChannel = discord.utils.get(server.channels, name="village-" + villageName + "-menu")
+            print(newChannel)
+            await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
+            await newChannel.set_permissions(newRpRole, read_messages=True, send_messages=True)
+            await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
 
             await server.create_text_channel("Village-" + villageName + "-RP", category=newCategory)
             newChannel = discord.utils.get(server.channels, name="village-" + villageName + "-rp")
@@ -729,14 +739,21 @@ async def on_message(message):
             await newChannel.set_permissions(newRpRole, read_messages=True, send_messages=True)
             await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
 
+            await server.create_text_channel("House-" + houseChannelName[1] + "-BOT", category=newCategory)
+            newChannel = discord.utils.get(server.channels, name="house-" + houseChannelName[1] + "-bot")
+            print(newChannel)
+            await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
+            await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
+            await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
+
             await server.create_text_channel( houseChannelName[1] + "-map", category=newCategory)
             newChannel = discord.utils.get(server.channels, name=houseChannelName[1] + "-map")
             await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
             await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
             await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
 
-            await server.create_text_channel( houseChannelName[1] + "-administration", category=newCategory)
-            newChannel = discord.utils.get(server.channels, name=houseChannelName[1] + "-administration")
+            await server.create_text_channel( houseChannelName[1] + "-global-administration", category=newCategory)
+            newChannel = discord.utils.get(server.channels, name=houseChannelName[1] + "-global-administration")
             await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
             await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
             await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
@@ -914,6 +931,7 @@ async def on_message(message):
         # default players for test purpose
         if param[1] == "usual":
             anotherOne = False
+            return
             players = ["Towa of the Klan", "Arya Anor", "Doubledore Piast", "Petter Berg"]
 
         # get all members in fight
