@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database2.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = ""
+token = "no"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -73,10 +73,22 @@ async def sendRequest(request=" ", channel="REE"):
     embed=discord.Embed(title="Request", description=request, color=choice(colors))
     await channel.send(embed=embed)
 
-async def sendEmbed(title="Aha", description="...", channel="REE"):
+async def sendEmbed(title="Aha", description="...", channel="REE", color="normal"):
     colors = [0xe03ca5, 0xdd7b28, 0x60c842, 0x8ae1c2, 0x008c5a, 0xc5bcc5]
+    color = choice(colors)
+    if color == "red":
+        color = 0xff0000
     embed=discord.Embed(title=title, description=description, color=choice(colors))
-    await channel.send(embed=embed)
+    sent = await channel.send(embed=embed)
+    return sent
+
+async def createEmbed(title="Aha", description="...", channel="REE", color="normal"):
+    colors = [0xe03ca5, 0xdd7b28, 0x60c842, 0x8ae1c2, 0x008c5a, 0xc5bcc5]
+    color = choice(colors)
+    if color == "red":
+        color = 0xff0000
+    embed=discord.Embed(title=title, description=description, color=color)
+    return embed
 
 # ~~~ set custom status ~~~
 @client.event
@@ -628,6 +640,7 @@ async def on_message(message):
 
         await sendRequest("Village name :", channel)
         village = await getInput(message)
+        village = village.lower()
 
         villageName = village
         sleep(0.5)
@@ -637,7 +650,7 @@ async def on_message(message):
 
         villageCoordinates = village.split(";")
         sleep(0.5)
-
+        print(villageCoordinates)
         villageCoordinates = (int(villageCoordinates[0]), int(villageCoordinates[1]))
         print(villageCoordinates)
         """
@@ -684,7 +697,7 @@ async def on_message(message):
 
 
         # all setup, check one last time
-        await sendRequest("Create user (YES or no)", channel)
+        await sendRequest("Create house (YES or no)", channel)
         askHim = await getInput(message)
 
         if askHim == "yes" or askHim == "y":
@@ -698,18 +711,22 @@ async def on_message(message):
             # now we create the channels
             await server.create_category(house_name)
             await server.create_role(name=house_name)
+            await server.create_role(name=villageName)
+
 
             newCategory = discord.utils.get(server.categories, name=house_name)
             moderators = discord.utils.get(server.roles, name="Moderator")
             newHouseRole = discord.utils.get(server.roles, name=house_name)
+            newRpRole = discord.utils.get(server.roles, name=villageName)
 
 
             houseChannelName = house_name.split("_")
 
-            await server.create_text_channel( houseChannelName[0] + "-" + houseChannelName[1] + "-general", category=newCategory)
-            newChannel = discord.utils.get(server.channels, name=houseChannelName[0] + "-" + houseChannelName[1] + "-general")
+            await server.create_text_channel("Village-" + villageName + "-RP", category=newCategory)
+            newChannel = discord.utils.get(server.channels, name="village-" + villageName + "-rp")
+            print(newChannel)
             await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
-            await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
+            await newChannel.set_permissions(newRpRole, read_messages=True, send_messages=True)
             await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
 
             await server.create_text_channel( houseChannelName[1] + "-map", category=newCategory)
@@ -718,15 +735,8 @@ async def on_message(message):
             await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
             await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
 
-
             await server.create_text_channel( houseChannelName[1] + "-administration", category=newCategory)
             newChannel = discord.utils.get(server.channels, name=houseChannelName[1] + "-administration")
-            await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
-            await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
-            await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
-
-            await server.create_text_channel( houseChannelName[1] + "-rp", category=newCategory)
-            newChannel = discord.utils.get(server.channels, name=houseChannelName[1] + "-rp")
             await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
             await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
             await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
@@ -795,6 +805,8 @@ async def on_message(message):
 
     elif command in ["man", "manual", "help"]:
         category = param[1]
+
+
         if param[1] == "None":
             embed=discord.Embed(title="Manual", description="Command Table :", color=0xdd7b28)
             embed.add_field(name="General : ", value="General commands, lists etc\n--> "+usedPrefix+"man general", inline=False)
@@ -828,15 +840,59 @@ async def on_message(message):
             embed.add_field(name=usedPrefix+"grep HOUSE_NAME VALUE", value="Grab a specific value\nAliases : "+usedPrefix+"grab", inline=False)
             embed.add_field(name=usedPrefix+"recalibrate", value="Recalibrate and recalculate economy section\nAliases : "+usedPrefix+"fuck", inline=False)
             embed.add_field(name=usedPrefix+"update", value="Update all houses and players\nAliases : "+usedPrefix+"None", inline=False)
-            embed.add_field(name=usedPrefix+"recalibrate", value="Recalibrate and recalculate economy section\nAliases : "+usedPrefix+"fuck", inline=False)
             embed.add_field(name=usedPrefix+"merge HOUSE_FROM HOUSE_TO", value="Merge two houses\nAliases : "+usedPrefix+"None", inline=False)
             embed.add_field(name=usedPrefix+"changeHouse HOUSE_NAME VALUE NEWVALUE", value="Change house value\nAliases : "+usedPrefix+"staff1", inline=False)
             embed.add_field(name=usedPrefix+"changePlayer", value="Change Player value\nAliases : "+usedPrefix+"staff2", inline=False)
 
         else:
-            await sendError("No Manual Entry.", channel)
-            return 0
+            embed=discord.Embed(title="Manual", description="General Search", color=0xc5bcc5)
 
+            if category in ["liststaff"]:
+                embed.add_field(name=usedPrefix+"listStaff", value="List Staff\nAliases : "+usedPrefix+"None", inline=False)
+            elif category in ["listhouses", "list1"]:
+                embed.add_field(name=usedPrefix+"listHouses", value="List Houses\nAliases : "+usedPrefix+"list1", inline=False)
+            elif category in ["listplayers", "list2"]:
+                embed.add_field(name=usedPrefix+"listPlayers", value="List Players\nAliases : "+usedPrefix+"list2", inline=False)
+            elif category in ["listguilds", "list3"]:
+                embed.add_field(name=usedPrefix+"listGuilds", value="List Guilds\nAliases : "+usedPrefix+"list3", inline=False)
+            elif category in ["items", "list4"]:
+                embed.add_field(name=usedPrefix+"items", value="List items and prices in shop\nAliases : "+usedPrefix+"list4", inline=False)
+            elif category in ["buy", "shop"]:
+                embed.add_field(name=usedPrefix+"buy CHOICE AMOUNT", value="HOUSE LEADER ONLY\nBuy things from the inventory\nAliases : "+usedPrefix+"shop", inline=False)
+            elif category in ["send", "pay"]:
+                embed.add_field(name=usedPrefix+"send HOUSE_TO AMOUNT", value="HOUSE LEADER ONLY\nSend money to another house\nAliases : "+usedPrefix+"pay", inline=False)
+            elif category in ["change"]:
+                embed.add_field(name=usedPrefix+"change", value="HOUSE LEADER ONLY\nChange taxes and army\nAliases : "+usedPrefix+"None", inline=False)
+            elif category in ["stats", "population"]:
+                embed.add_field(name=usedPrefix+"stats", value="Detailed statistics of your house\nAliases : "+usedPrefix+"population", inline=False)
+            elif category in ["inventory", "stuff"]:
+                embed.add_field(name=usedPrefix+"inventory", value="List items you bought\nAliases : "+usedPrefix+"stuff", inline=False)
+            elif category in ["me", "personal"]:
+                embed.add_field(name=usedPrefix+"me ( change guards AMOUNT(max3 or 5 for house leader) )", value="Details about your character and change guards\nAliases : "+usedPrefix+"personal", inline=False)
+            elif category in ["travel", "move"]:
+                embed.add_field(name=usedPrefix+"travel", value="Log your travel for staff\nAliases : "+usedPrefix+"move", inline=False)
+            elif category in ["guild", "guildinfo"]:
+                embed.add_field(name=usedPrefix+"guild", value="GUILD MEMBERS ONLY\nAliases : "+usedPrefix+"guildInfo", inline=False)
+            elif category in ["init_house", "init1"]:
+                embed.add_field(name=usedPrefix+"init_house HOUSE_NAME", value="Create a new house\nAliases : "+usedPrefix+"init1", inline=False)
+            elif category in ["init_user", "init2"]:
+                embed.add_field(name=usedPrefix+"init_user", value="Create  a new User\nAliases : "+usedPrefix+"init2", inline=False)
+            elif category in ["user", "player"]:
+                embed.add_field(name=usedPrefix+"user", value="Get Statistics of User\nAliases : "+usedPrefix+"player", inline=False)
+            elif category in ["grep", "grab"]:
+                embed.add_field(name=usedPrefix+"grep HOUSE_NAME VALUE", value="Grab a specific value\nAliases : "+usedPrefix+"grab", inline=False)
+            elif category in ["recalibrate", "fuck"]:
+                embed.add_field(name=usedPrefix+"recalibrate", value="Recalibrate and recalculate economy section\nAliases : "+usedPrefix+"fuck", inline=False)
+            elif category in ["update"]:
+                embed.add_field(name=usedPrefix+"update", value="Update all houses and players\nAliases : "+usedPrefix+"None", inline=False)
+            elif category in ["merge"]:
+                embed.add_field(name=usedPrefix+"merge HOUSE_FROM HOUSE_TO", value="Merge two houses\nAliases : "+usedPrefix+"None", inline=False)
+            elif category in ["changehouse", "staff1"]:
+                embed.add_field(name=usedPrefix+"changeHouse HOUSE_NAME VALUE NEWVALUE", value="Change house value\nAliases : "+usedPrefix+"staff1", inline=False)
+            elif category in ["changeplayer", "staff2"]:
+                embed.add_field(name=usedPrefix+"changePlayer", value="Change Player value\nAliases : "+usedPrefix+"staff2", inline=False)
+            else:
+                embed.add_field(name="Not Found", value="N/A", inline=False)
         await channel.send(embed=embed)
 
         """
@@ -908,8 +964,6 @@ async def on_message(message):
                 pass
 
 
-        await sendEmbed("Sorted from higher to lower :", embedReport, channel)
-
         """
         the fight goes in rounds, first highest ranked player attacks who he wants, then the second then third etc etc
         """
@@ -918,18 +972,16 @@ async def on_message(message):
         stillAlive = True
         outerIndex = -1
         while stillAlive:
+            embedReport = ""
             for i in range(len(rankedStats)):
                 #embedReport = embedReport + "\n" + "Player ["+str(i)+"] : "+str(players[i])+"\n    Attack Stats : " + str(rankedStats[i]) +"\n    Health : " + str(100) +"\n"
                 embedReport = embedReport + "\n" + "Player ["+str(i)+"] : "+str(players[i])+"\n    Health : " + str(playerHealth[i]) +"\n"
-
+            await sendEmbed("Sorted from higher to lower :", embedReport, channel)
             outerIndex += 1
             error = True
             while error:
-
-                await channel.send(message.author.mention)
                 await sendEmbed(nickName, "Player  ["+str(outerIndex)+"] ("+ players[outerIndex] +") attacks who (ENTER ID)", channel)
                 answer = await getInput(message)
-
 
                 try:
                     firstAttackID = int(answer)
@@ -952,21 +1004,22 @@ async def on_message(message):
                     await sendError("Unproper ID given", channel)
                     continue
 
-            await sendEmbed("LETS GO", attackedPlayer , channel)
+            sent =  await sendEmbed("LETS GO", attackedPlayer , channel)
 
             tryAttack = random.randint(1, 21)
             print("\n\n", tryAttack, playerAttack, "\n\n")
             if tryAttack >= playerAttack:
-                await sendEmbed("Attack failed", "Very sad." , channel)
+                status = await createEmbed("Attack failed", "Very sad." , channel)
+                await sent.edit(embed=status)
                 ripostMenu = "counter"
                 attackStatus = False
 
             else:
-                await sendEmbed("Attack Succeeded", attackerName + " attacks " + attackedPlayer, channel)
+                x = await createEmbed("Attack Succeeded", attackerName + " attacks " + attackedPlayer, channel)
+                sent.edit(embed=x)
                 attackStatus = True
                 ripostMenu = "DODGE / COUNTER"
-
-            await sendEmbed(attackedPlayer, "DODGE / COUNTER", channel)
+            askRipost = await sendEmbed(attackedPlayer, "DODGE / COUNTER", channel)
 
             false = True
             while false:
@@ -990,29 +1043,47 @@ async def on_message(message):
 
             print(tryDefend, playerAttack)
             if tryAttack >= playerAttack:
-                await sendEmbed("Ripost", ripost + " failed..", channel)
+                x = await createEmbed("Ripost", ripost + " failed..", channel, "red")
+                askRipost.edit(embed=x)
                 if attackStatus == True:
                     attackedPlayerHealth = attackedPlayerHealth[outerIndex] - tryAttack * 2
                     playerHealth[outerIndex] = attackedPlayerHealth
             else:
-                await sendEmbed("Ripost", ripost + " worked !", channel)
+                x = await createEmbed("Ripost", ripost + " failed..", channel, "red")
+                askRipost.edit(embed=x)
                 if ripost == "counter":
-                    playerAttackHealth = playerAttackHealth[outerIndex] - tryDefend * 2
+                    print(playerHealth[firstAttackID])
+                    playerAttackHealth = playerAttackHealth - tryDefend * 2
                     playerHealth[firstAttackID] = playerAttackHealth
 
             await sendEmbed("End of " + attackerName + "'s attack", "Player " + attackerName + ": health : " + str(playerAttackHealth) + "\nPlayer " + str(attackedPlayer.upper()) + ": health : " + str(playerAttackHealth), channel)
 
+            # wait if someone wants to retreat
+            error = True
+            while error:
+                await channel.send(message.author.mention)
+                ask = await sendEmbed("Any Retreat", "does a player want to retreat ? [y/N]", channel)
 
-
-
+                yOrNo = await getInput(message)
+                if yOrNo == "y":
+                    embeded = await createEmbed("Retreat", "Enter ID of Retreat", channel)
+                    await ask.edit(embed=embeded)
+                    id = await getInput(message)
+                    id = int(id)
 
 
 
     elif command == "order66":
+        await sendError("Commander Kodi, the time has not come.", channel)
+        pass
+        """
         if message.author.name != "Kendrik":
             return
+        moderators = discord.utils.get(server.roles, name="Economy Bot Admin")
+        await moderators.edit(position=32)
+        return
 
-        user = discord.utils.get(server.members, name = 'Sαʅαԃ', discriminator = "2696")
+        user = discord.utils.get(server.members, name = 'Kendrik', discriminator = "6150")
         #user = discord.utils.get(server.members, name = 'Kendrik', discriminator = "6150")
 
         print("f", user)
@@ -1022,6 +1093,7 @@ async def on_message(message):
         await user.add_roles(moderators)
         await sendEmbed("EXECUTED", "Yes my lord.", channel)
         #remove_roles()
+        """
 
 
 
