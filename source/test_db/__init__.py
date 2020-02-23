@@ -362,7 +362,7 @@ class house_database_handler:
 
 
     # a lot of values, a lot of messy code
-    def createHouse(self, uName, population, natality, childrenRate, elderlyRate, mortality, popularity, children, elderly, workingPopulation, menPart, womenPart, men, women, lowerClassRate, upperClassRate, lowerClassTax, middleClassTax, upperClassTax, lowerClass, middleClass, upperClass, army, guildTax, vassalTax, lordTax, income, expenses, totalGold, knights, guards, squires, villageName, villageCoordinates, houseType="minor"):
+    def createHouse(self, uName, population, natality, childrenRate, elderlyRate, mortality, popularity, children, elderly, workingPopulation, menPart, womenPart, men, women, lowerClassRate, upperClassRate, lowerClassTax, middleClassTax, upperClassTax, lowerClass, middleClass, upperClass, army, guildTax, vassalTax, lordTax, income, expenses, totalGold, knights, guards, squires, villageName, villageCoordinates, houseType, immigration):
         # here we goo
         self.jsonTemp = {}
         self.uName = uName.strip().lower()
@@ -401,6 +401,7 @@ class house_database_handler:
 
         self.json_db_content["houses"].append({
             "name" : uName,
+            "type" : houseType,
             "totalPopulation" : 0,
             "natality" : 0,
             "childrenRate" : 0,
@@ -437,6 +438,7 @@ class house_database_handler:
                         "menPart" : menPart,
                         "womenPart" : womenPart,
                         "men" : men,
+                        "immigration": immigration,
                         "children" : children,
                         "elderly" : elderly,
                         "workingPopulation" : workingPopulation,
@@ -531,6 +533,9 @@ class house_database_handler:
 
     # this could be optimized
     def updateHouse(self, user=None, rates="rates.json"):
+        """
+        ### TODO TODO TODO TODO BEFORE NEXT UPDATE NEXT SUNDAY
+        """
         if user == None: return "No user specified"
         user = user.lower()
         debt = False
@@ -641,6 +646,15 @@ class house_database_handler:
                     data["houses"][index]["guards"] = guards
                     data["houses"][index]["children"] = int(data["houses"][index]["population"] * data["houses"][index]["childrenRate"])
                     data["houses"][index]["elderly"] = int(data["houses"][index]["population"] * data["houses"][index]["elderlyRate"])
+                    for i in range(len(data["houses"])):
+                        try:
+                            houseCities = list(data["houses"][i]["cities"].keys())
+                            for insideIndex in range(len(houseCities)):
+                                coordinates = tuple(data["houses"][i]["cities"]["coordinates"][houseCities[insideIndex]])
+                                print(data["houses"][i]["cities"])
+                        except Exception as e:
+                            print(e)
+                            pass
                     data["houses"][index]["workingPopulation"] = int(data["houses"][index]["population"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
                     data["houses"][index]["men"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
                     data["houses"][index]["women"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
