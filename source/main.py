@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database2.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "NGA"
+token = "no"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -62,6 +62,7 @@ async def getInput(message):
     print("called")
     answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith(":") == True)
     answer = answer.content.split(":")[1].strip()
+    answer = answer.lower()
     return answer
 
 async def sendError(error="error", channel="REE"):
@@ -727,21 +728,18 @@ async def on_message(message):
 
             await server.create_text_channel("Village-" + villageName + "-MENU", category=newCategory)
             newChannel = discord.utils.get(server.channels, name="village-" + villageName + "-menu")
-            print(newChannel)
             await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
             await newChannel.set_permissions(newRpRole, read_messages=True, send_messages=True)
             await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
 
             await server.create_text_channel("Village-" + villageName + "-RP", category=newCategory)
             newChannel = discord.utils.get(server.channels, name="village-" + villageName + "-rp")
-            print(newChannel)
             await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
             await newChannel.set_permissions(newRpRole, read_messages=True, send_messages=True)
             await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
 
             await server.create_text_channel("House-" + houseChannelName[1] + "-BOT", category=newCategory)
             newChannel = discord.utils.get(server.channels, name="house-" + houseChannelName[1] + "-bot")
-            print(newChannel)
             await newChannel.set_permissions(server.default_role, read_messages=False, send_messages=False)
             await newChannel.set_permissions(newHouseRole, read_messages=True, send_messages=True)
             await newChannel.set_permissions(moderators, read_messages=True, send_messages=True)
