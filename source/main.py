@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database2.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "no"
+token = "N O"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -234,25 +234,31 @@ async def on_message(message):
 
 
     elif command in ["stats", "population"]:
+        city = "None"
         if staffMemberRequest == 1:
             member = param[1]
+        if staffMemberRequest == 1 and param[2] != "None":
+            city = param[2]
+        if staffMemberRequest == 0 and param[1] != "None":
+            city = param[1]
+        print(city)
+
         try:
             if double_house[member]:
                 print(double_house[member])
                 await channel.send("First for " + str(double_house[member]))
-                info = db.lookFor(double_house[member])
+                info = db.lookFor(double_house[member],"house", "normal", None, None, city)
                 await channel.send(info)
         except:
             pass
 
         # by default return an error, this is just when staff calls command without precising
-        if staffMemberRequest == 0 and member == "None":
+        if staffMemberRequest == 1 and member == "None":
             await sendError("Enter a name too", channel)
             return "error"
         # obsolete
-        member = member.lower().strip()
         print("looking for ", member)
-        info = db.lookFor(member)
+        info = db.lookFor(member, "house", "normal", None, None, city)
         await channel.send(info)
 
 
