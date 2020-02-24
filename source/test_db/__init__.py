@@ -226,7 +226,7 @@ class house_database_handler:
                 return "`House " + str(houseName) + " bought " + str(amount) + " " + str(item) + " for " + str(totalPrice) + " goldpieces.`"
 
     # look for a specific user, then show its specifications
-    def lookFor(self, user, mode="house", personalMode = "normal", personalValue = None, personalAmount = None):
+    def lookFor(self, user, mode="house", personalMode = "normal", personalValue = None, personalAmount = None, givenCity = "None"):
         with open(self.pathToJson) as db:
             data = json.load(db)
             # index set to -1 if below code fails, obsolete with the new try
@@ -237,17 +237,69 @@ class house_database_handler:
                 if data["houses"][index]["name"].lower() != user.lower() or index == -1:
                     return "```diff\n- error, get the name right pls```"
                 # that took some time..
-                name = str(data["houses"][index]["name"]) ; population = str(data["houses"][index]["population"]) ; natality = str(data["houses"][index]["natality"] * 100) ; childrenRate = str(data["houses"][index]["childrenRate"] * 100) ; elderlyRate = str(data["houses"][index]["elderlyRate"] * 100) ; mortality = str(data["houses"][index]["mortality"] * 100) ; popularity = str(data["houses"][index]["popularity"] * 100) ; children = str(data["houses"][index]["children"]) ; elderly = str(data["houses"][index]["elderly"]) ;  workingPopulation = str(data["houses"][index]["workingPopulation"]) ; menPart = str(data["houses"][index]["menPart"]) ; womenPart = str(data["houses"][index]["womenPart"]) ; men = str(int(data["houses"][index]["men"])) ; women = str(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"]) ; lowerClassRate = str(data["houses"][index]["lowerClassRate"]*100) ;  upperClassRate = str(data["houses"][index]["upperClassRate"]*100) ; lowerClassTax = str(data["houses"][index]["lowerClassTax"]) ; middleClassTax = str(data["houses"][index]["middleClassTax"]) ; upperClassTax = str(data["houses"][index]["upperClassTax"]) ; lowerClass = str(data["houses"][index]["lowerClass"]) ;  middleClass = str(data["houses"][index]["middleClass"]) ; upperClass = str(data["houses"][index]["upperClass"]) ; army = str(data["houses"][index]["army"]) ; guildTax = str(data["houses"][index]["guildTax"]) ; vassalTax = str(data["houses"][index]["vassalTax"]) ; lordTax = str(data["houses"][index]["lordTax"]) ; income = str(data["houses"][index]["income"]) ;  expenses = str(data["houses"][index]["expenses"]) ; totalGold = str(data["houses"][index]["totalGold"]) ; knights = str(data["houses"][index]["knights"]) ; guards = str(data["houses"][index]["guards"]) ; squires = str(data["houses"][index]["squires"]) ; nettoIncome = str(data["houses"][index]["nettoIncome"])
+                name = str(data["houses"][index]["name"])
+                population = str(data["houses"][index]["totalPopulation"])
+                natality = str(data["houses"][index]["natality"] * 100)
+                childrenRate = str(data["houses"][index]["childrenRate"] * 100)
+                elderlyRate = str(data["houses"][index]["elderlyRate"] * 100)
+                mortality = str(data["houses"][index]["mortality"] * 100)
+                popularity = str(data["houses"][index]["popularity"] * 100)
+                children = str(data["houses"][index]["children"])
+                elderly = str(data["houses"][index]["elderly"])
+                workingPopulation = str(data["houses"][index]["workingPopulation"])
+                menPart = str(data["houses"][index]["menPart"])
+                womenPart = str(data["houses"][index]["womenPart"])
+                men = str(int(data["houses"][index]["men"]))
+                women = str(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
+                lowerClassRate = str(data["houses"][index]["lowerClassRate"]*100)
+                upperClassRate = str(data["houses"][index]["upperClassRate"]*100)
+                lowerClassTax = str(data["houses"][index]["lowerClassTax"])
+                middleClassTax = str(data["houses"][index]["middleClassTax"])
+                upperClassTax = str(data["houses"][index]["upperClassTax"])
+                lowerClass = str(data["houses"][index]["lowerClass"])
+                middleClass = str(data["houses"][index]["middleClass"])
+                upperClass = str(data["houses"][index]["upperClass"])
+                army = str(data["houses"][index]["army"])
+                guildTax = str(data["houses"][index]["guildTax"])
+                vassalTax = str(data["houses"][index]["vassalTax"])
+                lordTax = str(data["houses"][index]["lordTax"])
+                income = str(data["houses"][index]["income"])
+                expenses = str(data["houses"][index]["expenses"])
+                totalGold = str(data["houses"][index]["totalGold"])
+                knights = str(data["houses"][index]["knights"])
+                guards = str(data["houses"][index]["guards"])
+                squires = str(data["houses"][index]["squires"])
+                nettoIncome = str(data["houses"][index]["nettoIncome"])
+                cities = ""
+                coordinatesList = []
+                try:
+                    houseCities = list(data["houses"][index]["cities"].keys())
+                    for insideIndex in range(len(houseCities)):
+                        coordinates = tuple(data["houses"][index]["cities"][houseCities[insideIndex]]["coordinates"])
+                        coordinatesList.append(coordinates)
+                        cities = cities + "\n" + "City : " + houseCities[insideIndex] + " ; Coordinates : " + str(coordinates)
+                except Exception as e:
+                    print(e)
+                    pass
+
+                print("REE ",cities)
                 # Discord formatted information to return
                 # This took some time ...
-                formattedInfo = str("\n```diff\n-        Population of " + name + ":\nTotal Population : " + population + "\nChildren : " + children + "\nElders : " + elderly + "\nWorking Population : " + workingPopulation + "\nMen : " + men + "\nWomen : " + women + "\nMiddle Class : " + middleClass + "\nUpper Class : " + upperClass + "\nPoor Class : " + lowerClass + "\nArmy : " + army + " men" + "\nGuards : " + guards + "\nKnights : " + knights + "\nSquires : " + squires + "\n\n\n-          Statistics" + "\nPopularity : " + str((float(popularity))) + " percent" + "\nNatality : " + str((float(natality))) + " percent" + "\nMortality : " + str((float(mortality))) + " percent" + "\nchildren rate : " + str((float(childrenRate))) + " percent" + "\nElders Rate : " + str((float(elderlyRate))) + " percent" + "\nLower Class Rate : " + str((float(lowerClassRate))) + " percent" + "\nUpper Class Rate : " + str((float(upperClassRate))) + " percent" + "\nLower Class Tax : " + lowerClassTax + "\nMiddle Class Tax : " + middleClassTax + "\nUpper Class Tax: " + upperClassTax + "\n\n\n-          Economy" + "\nRaw income : " + income + "\nExpenses :   " + expenses + "\nIncome :    " + nettoIncome + "\nTotal Gold : " + totalGold + "\n```")
+                if givenCity == "None":
+                    formattedInfo = str("\n```diff\n-        GLOBAL Population of " + name + ":\nCities : \t"+ cities +"\n\nTotal Population : " + population + "\nChildren : " + children + "\nElders : " + elderly + "\nWorking Population : " + workingPopulation + "\nMen : " + men + "\nWomen : " + women + "\nMiddle Class : " + middleClass + "\nUpper Class : " + upperClass + "\nPoor Class : " + lowerClass + "\nArmy : " + army + " men" + "\nTotal Guards : " + guards + "\nKnights : " + knights + "\nSquires : " + squires + "\n\n\n-          Statistics" + "\nPopularity : " + str((float(popularity))) + " percent" + "\nAverage Natality : " + str((float(natality))) + " percent" + "\nAverage Mortality : " + str((float(mortality))) + " percent" + "\nChildren rate : " + str((float(childrenRate))) + " percent" + "\nElders Rate : " + str((float(elderlyRate))) + " percent" + "\nLower Class Rate : " + str((float(lowerClassRate))) + " percent" + "\nUpper Class Rate : " + str((float(upperClassRate))) + " percent" + "\nLower Class Tax : " + lowerClassTax + "\nMiddle Class Tax : " + middleClassTax + "\nUpper Class Tax: " + upperClassTax + "\n\n\n-          Economy" + "\nRaw income : " + income + "\nExpenses :   " + expenses + "\nIncome :    " + nettoIncome + "\nTotal Gold : " + totalGold + "\n```")
+                else:
+                    try:
+                        print(data["houses"][index]["cities"][givenCity])
+                    except:
+                        return "❌ - City Not Found."
+                    formattedInfo = str("\n```diff\n-        Population of city " + givenCity + ":\nCoordinates : \t"+ str(tuple(data["houses"][index]["cities"][givenCity]["coordinates"])) +"\nPopulation :  \t" + str(data["houses"][index]["cities"][givenCity]["population"]) + "\nMen :         \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["menPart"]) + "\nWomen :       \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["womenPart"]) + "\nChildren :    \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["childrenRate"]) + "\nElders :      \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["elderlyRate"]) + "\nWorking Pop :     " + str(data["houses"][index]["cities"][givenCity]["population"] - data["houses"][index]["cities"][givenCity]["children"] - data["houses"][index]["cities"][givenCity]["elderly"]) + "\nImmigration :     " + str(data["houses"][index]["cities"][givenCity]["immigration"] * 100) + "\nNatality :        " + str(data["houses"][index]["cities"][givenCity]["natality"] * 100) + "\nMortality :       " + str(data["houses"][index]["cities"][givenCity]["mortality"] * 100) + "\n```")
+
 
                 try:
                     if data["houses"][index]["blocked"] == "true":
-                        formattedInfo = str("\n```diff\n-        Population of " + name + ":\nTotal Population : " + population + "\nChildren : " + children + "\nElders : " + elderly + "\nWorking Population : " + workingPopulation + "\nMen : " + men + "\nWomen : " + women + "\nMiddle Class : " + middleClass + "\nUpper Class : " + upperClass + "\nPoor Class : " + lowerClass + "\n- Army : BLOCKED (you are in debt)" + "\nGuards : " + guards + "\nKnights : " + knights + "\nSquires : " + squires + "\n\n\n-          Statistics" + "\nPopularity : " + str((float(popularity))) + " percent" + "\nNatality : " + str((float(natality))) + " percent" + "\nMortality : " + str((float(mortality))) + " percent" + "\nchildren rate : " + str((float(childrenRate))) + " percent" + "\nElders Rate : " + str((float(elderlyRate))) + " percent" + "\nLower Class Rate : " + str((float(lowerClassRate))) + " percent" + "\nUpper Class Rate : " + str((float(upperClassRate))) + " percent" + "\nLower Class Tax : " + lowerClassTax + "\nMiddle Class Tax : " + middleClassTax + "\nUpper Class Tax: " + upperClassTax + "\n\n\n-          Economy" + "\nRaw income : " + income + "\nExpenses :   " + expenses + "\nIncome :    " + nettoIncome + "\nTotal Gold : " + totalGold + "\n```")
+                        formattedInfo = "\n```diff\n-YOUR ARMY HAS BEEN BLOCKED DUE TO YOUR DEFICIT\n" + formattedInfo
                 except:
                     pass # hm
-                print(formattedInfo)
                 return formattedInfo
 
             # yes this is supposed to be a LOOK at stats, but its also easier to use it to change guards for users
@@ -392,7 +444,7 @@ class house_database_handler:
             try:
                 houseCities = list(self.json_db_content["houses"][i]["cities"].keys())
                 for insideIndex in range(len(houseCities)):
-                    coordinates = tuple(self.json_db_content["houses"][i]["cities"]["coordinates"][houseCities[insideIndex]])
+                    coordinates = tuple(self.json_db_content["houses"][i]["cities"][houseCities[insideIndex]["coordinates"]])
                     if houseCities[insideIndex] == villageName or coordinates == villageCoordinates:
                         return "error. village exists (check name or coordinates)"
             except Exception as e:
@@ -432,6 +484,7 @@ class house_database_handler:
             "knights" : knights,
             "guards" : guards,
             "squires" : squires,
+            "nettoIncome" : 0,
             "cities": {villageName: {
                         "coordinates":villageCoordinates,
                         "population" : population,
