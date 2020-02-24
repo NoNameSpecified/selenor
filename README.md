@@ -1,13 +1,13 @@
 # selenor
 The bot used in the Selenor discord game.
 Conquest, RP, Economy, all you want !
-Join us !
-https://discord.gg/6c4JaWV
+Join us on Discord!
+https://discord.gg/UMy2dE5
 
-
-## Source -
-Here you will the find the current stable release used
 
 ## Master Branch -
+Here you will the find the current stable release used
+
+## Backup Branch -
 old Archive, not used anymore
 
