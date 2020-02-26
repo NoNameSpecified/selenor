@@ -1,7 +1,7 @@
 import random, discord
 from discord.ext.commands import Bot
 # custom database handler
-from test_db import *
+from db import *
 from time import sleep
 from random import choice
 
@@ -36,7 +36,7 @@ INFO :
 """
 
 # init json handling and discord
-db = house_database_handler("database2.json")
+db = house_database_handler("database.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
 token = "N O"
@@ -55,14 +55,15 @@ client = Bot(command_prefix=BOT_PREFIX)
 # when a house controls another one, but didnt merge with it
 # below for example at "change", they will be able to choose which house they want to change values for
 double_house = {
-
+    "house_royal" : "house_lancaster"
 }
 
 async def getInput(message):
     print("called")
     answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith(":") == True)
+    print(answer)
     answer = answer.content.split(":")[1].strip()
-    answer = answer.lower()
+    answer = answer.lower().strip()
     return answer
 
 async def sendError(error="error", channel="REE"):
@@ -211,7 +212,7 @@ async def on_message(message):
         if item == "None":
             items, prices = db.listItems()
             embed = discord.Embed(title="Available items : ", color=0xffffff)
-            for i in range(len(request)):
+            for i in range(len(items)):
                 embed.add_field(name="Item : "+str(items[i].upper()), value="Price : "+str(prices[i]), inline=False)
 
             await channel.send(embed=embed)
@@ -439,7 +440,7 @@ async def on_message(message):
         await sendRequest("Are you sure you want to change values for "+ str(member) + " [y/N] :", channel)
         sleep(0.1)
         # ++++
-        answer = await getInput(message).strip()
+        answer = await getInput(message)
         if answer != "y" and answer != "yes":
             await sendError("Aborted.", channel)
             return 1
@@ -448,7 +449,7 @@ async def on_message(message):
         await sendRequest("Which value do you want to change ? ['army' ; 'taxes']", channel)
         sleep(0.1)
         # ++++
-        choice = await getInput(message).strip()
+        choice = await getInput(message)
         if choice not in ['army', 'taxes']:
             await sendError("Unknown option. Abort.", channel)
 
@@ -456,13 +457,12 @@ async def on_message(message):
             updated = db.changeSpecific(member, "army", 0, 0, "info")#
             await sendEmbed("Report", "You can afford maximum " + updated + " troops", channel)
 
-            sleep(1)
+            sleep(0.5)
             await sendRequest("Amount of : " + choice, channel)
             sleep(0.1)
-            answer = await getInput(message)
 
             try:
-                amount = int(await getInput(message).strip())
+                amount = int(await getInput(message))
             except:
                 await sendError("hmmm", channel)
                 return "error"
@@ -491,12 +491,11 @@ async def on_message(message):
                 await sendError("Error, not found (check capital letters)", channel)
                 return -1
 
-            sleep(1)
+            sleep(0.5)
             await sendRequest("New taxes for : " + choice + " (goldpieces)", channel)
             sleep(0.1)
-            answer = await getInput(message)
 
-            amount = int(await getInput(message).strip())
+            amount = int(await getInput(message))
 
             # calculate future salary here
             futureSalary = 0
@@ -574,17 +573,17 @@ async def on_message(message):
         await sendRequest("player to change :", channel)
         sleep(0.1)
         # ++++
-        houseRole = await getInput(message).strip()
+        houseRole = await getInput(message)
         await sendRequest("value to change :", channel)
         sleep(0.1)
         # ++++
-        choice = await getInput(message).strip()
+        choice = await getInput(message)
         await sendRequest("new value :", channel)
         sleep(0.1)
         # ++++
-        amount = await getInput(message).strip()
+        amount = await getInput(message)
         if choice != "name" and choice!= "equipment": amount = float(amount)
-        else: amount = str(await getInput(message).strip())
+        else: amount = str(await getInput(message))
         #  check again
         await sendRequest("Sure [y/N]", channel)
         # ++++
@@ -773,7 +772,7 @@ async def on_message(message):
         await sendRequest("User to look up : ", channel)
         print("RE")
         # ++++
-        user = await getInput(message).strip()
+        user = await getInput(message)
         print(user)
         info = db.lookFor(user, "personal", "normal", None, None)
         embed = discord.Embed(title="Player "+str(user)+" : ", color=0x1840ee)
