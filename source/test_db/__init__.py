@@ -250,7 +250,7 @@ class house_database_handler:
                 menPart = str(data["houses"][index]["menPart"])
                 womenPart = str(data["houses"][index]["womenPart"])
                 men = str(int(data["houses"][index]["men"]))
-                women = str(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
+                women = str(data["houses"][index]["women"])
                 lowerClassRate = str(data["houses"][index]["lowerClassRate"]*100)
                 upperClassRate = str(data["houses"][index]["upperClassRate"]*100)
                 lowerClassTax = str(data["houses"][index]["lowerClassTax"])
@@ -286,7 +286,7 @@ class house_database_handler:
                 # Discord formatted information to return
                 # This took some time ...
                 if givenCity == "None":
-                    formattedInfo = str("\n```diff\n-        GLOBAL Population of " + name + ":\nCities : \t"+ cities +"\n\nTotal Population : " + population + "\nChildren : " + children + "\nElders : " + elderly + "\nWorking Population : " + workingPopulation + "\nMen : " + men + "\nWomen : " + women + "\nMiddle Class : " + middleClass + "\nUpper Class : " + upperClass + "\nPoor Class : " + lowerClass + "\nArmy : " + army + " men" + "\nTotal Guards : " + guards + "\nKnights : " + knights + "\nSquires : " + squires + "\n\n\n-          Statistics" + "\nPopularity : " + str((float(popularity))) + " percent" + "\nAverage Natality : " + str((float(natality))) + " percent" + "\nAverage Mortality : " + str((float(mortality))) + " percent" + "\nChildren rate : " + str((float(childrenRate))) + " percent" + "\nElders Rate : " + str((float(elderlyRate))) + " percent" + "\nLower Class Rate : " + str((float(lowerClassRate))) + " percent" + "\nUpper Class Rate : " + str((float(upperClassRate))) + " percent" + "\nLower Class Tax : " + lowerClassTax + "\nMiddle Class Tax : " + middleClassTax + "\nUpper Class Tax: " + upperClassTax + "\n\n\n-          Economy" + "\nRaw income : " + income + "\nExpenses :   " + expenses + "\nIncome :    " + nettoIncome + "\nTotal Gold : " + totalGold + "\n```")
+                    formattedInfo = str("\n```diff\n-        GLOBAL Population of " + name + ":\nCities : \t"+ cities +"\n\nTotal Population : " + population + "\nChildren : " + children + "\nElders : " + elderly + "\nWorking Population : " + workingPopulation + "\nMen : " + men + "\nWomen : " + women + "\nMiddle Class : " + middleClass + "\nUpper Class : " + upperClass + "\nPoor Class : " + lowerClass + "\nArmy : " + army + " men" + "\nTotal Guards : " + guards + "\nKnights : " + knights + "\nSquires : " + squires + "\n\n\n-          Statistics" + "\nPopularity : " + str((float(popularity))) + " percent" + "\nAverage Natality : " + str(round(float(natality), 2)) + " percent" + "\nAverage Mortality : " + str(round(float(mortality), 2)) + " percent" + "\nChildren rate : " + str((float(childrenRate))) + " percent" + "\nElders Rate : " + str((float(elderlyRate))) + " percent" + "\nLower Class Rate : " + str((float(lowerClassRate))) + " percent" + "\nUpper Class Rate : " + str((float(upperClassRate))) + " percent" + "\nLower Class Tax : " + lowerClassTax + "\nMiddle Class Tax : " + middleClassTax + "\nUpper Class Tax: " + upperClassTax + "\n\n\n-          Economy" + "\nRaw income : " + income + "\nExpenses :   " + expenses + "\nIncome :    " + nettoIncome + "\nTotal Gold : " + totalGold + "\n```")
                 else:
                     try:
                         print(data["houses"][index]["cities"][givenCity])
@@ -533,7 +533,7 @@ class house_database_handler:
                     maximumTroopsBeforeDeficit = maxExpenses // self.armySalary
                     return str(maximumTroopsBeforeDeficit)
 
-                if choice == "army" and amount > data["houses"][index]["population"] - data["houses"][index]["elderly"] - data["houses"][index]["children"] - 1:
+                if choice == "army" and amount > data["houses"][index]["totalPopulation"] - data["houses"][index]["elderly"] - data["houses"][index]["children"] - 1:
                     return "too much army"
 
                 # else, normal mode
@@ -544,7 +544,7 @@ class house_database_handler:
                 if choice == "army" and futureExpenses > data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"] :
                     return "```diff\n- Your future expenses would be higher as your income.\nThis is not possible to change over he bot.\nAsk the staff for major changes that come with debt.```"
                 data["houses"][index][choice] = amount
-                data["houses"][index]["workingPopulation"] = int(data["houses"][index]["population"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
+                data["houses"][index]["workingPopulation"] = int(data["houses"][index]["totalPopulation"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
                 data["houses"][index]["men"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
                 data["houses"][index]["women"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
                 data["houses"][index]["lowerClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["lowerClassRate"])
@@ -605,10 +605,10 @@ class house_database_handler:
             """
             #natality = pass
             #mortality = pass
-            newPopulation = data["houses"][index]["population"] + (data["houses"][index]["population"] * data["houses"][index]["natality"]) - (data["houses"][index]["population"] * data["houses"][index]["mortality"])
+            newPopulation = data["houses"][index]["totalPopulation"] + (data["houses"][index]["totalPopulation"] * data["houses"][index]["natality"]) - (data["houses"][index]["totalPopulation"] * data["houses"][index]["mortality"])
             #popularity = manualPopularity
-            children, elderly = int(data["houses"][index]["population"] * data["houses"][index]["childrenRate"]), int(data["houses"][index]["population"] * data["houses"][index]["elderlyRate"])
-            workingPopulation = int(data["houses"][index]["population"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
+            children, elderly = int(data["houses"][index]["totalPopulation"] * data["houses"][index]["childrenRate"]), int(data["houses"][index]["totalPopulation"] * data["houses"][index]["elderlyRate"])
+            workingPopulation = int(data["houses"][index]["totalPopulation"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
             men = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
             women = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
             #knights, guards, squires = 0, 0, 0
@@ -635,7 +635,7 @@ class house_database_handler:
             totalGold = data["houses"][index]["totalGold"] + nettoIncome
 
             #data["houses"][index]["name"] = pass
-            data["houses"][index]["population"] = newPopulation
+            data["houses"][index]["totalPopulation"] = newPopulation
             data["houses"][index]["natality"] = natality / 100
             #data["houses"][index]["childrenRate"] = pass
             #data["houses"][index]["elderlyRate"] = pass
@@ -693,24 +693,60 @@ class house_database_handler:
             data = json.load(db)
             if house == "all":
                 for index in range(len(data["houses"])):
+                    totalElders = totalChildren = totalWomen = totalMen = totalWorkingPopulation = averageNatality = averageMortality = totalPopulation = 0
+                    try:
+                        houseCities = list(data["houses"][index]["cities"].keys())
+                        for insideIndex in range(len(houseCities)):
+                            cityData = data["houses"][index]["cities"][houseCities[insideIndex]]
+                            coordinates = tuple(cityData["coordinates"])
+                            cityElders = cityData["elderlyRate"] * cityData["population"]
+                            cityData["elderly"] = cityElders
+                            cityChildren = cityData["childrenRate"] * cityData["population"]
+                            cityData["children"] = cityChildren
+                            cityWorkingPopulation = cityData["population"] - cityData["children"] - cityData["elderly"]
+                            cityData["workingPopulation"] = cityWorkingPopulation
+                            cityMen = cityData["menPart"] * cityData["population"]
+                            cityData["men"] = cityMen
+                            cityWomen = cityData["womenPart"] * cityData["population"]
+                            cityData["women"] = cityWomen
+
+                            cityNatality = cityData["natality"]
+                            cityMortality = cityData["mortality"]
+
+                            totalElders = totalElders + cityElders
+                            totalChildren = totalChildren + cityChildren
+                            totalWomen = totalWomen + cityWomen
+                            totalMen = totalMen + cityMen
+                            totalWorkingPopulation = totalWorkingPopulation + cityWorkingPopulation
+                            averageNatality = averageNatality + cityNatality
+                            averageMortality = averageMortality + cityMortality
+                            totalPopulation = cityData["population"]
+                            cityChildrenRate = cityData["childrenRate"]
+                            cityEldersRate = cityData["elderlyRate"]
+
+                        averageNatality = averageNatality / len(houseCities)
+                        averageMortality = averageMortality / len(houseCities)
+                        print("\n\n",totalWomen)
+
+                    except Exception as e:
+                        print(e)
+                        pass
+
 
                     house = data["houses"][index]["name"].split("_")[1]
                     guards = self.calculate_guards(house)
+                    data["houses"][index]["totalPopulation"] = totalPopulation
                     data["houses"][index]["guards"] = guards
-                    data["houses"][index]["children"] = int(data["houses"][index]["population"] * data["houses"][index]["childrenRate"])
-                    data["houses"][index]["elderly"] = int(data["houses"][index]["population"] * data["houses"][index]["elderlyRate"])
-                    for i in range(len(data["houses"])):
-                        try:
-                            houseCities = list(data["houses"][i]["cities"].keys())
-                            for insideIndex in range(len(houseCities)):
-                                coordinates = tuple(data["houses"][i]["cities"]["coordinates"][houseCities[insideIndex]])
-                                print(data["houses"][i]["cities"])
-                        except Exception as e:
-                            print(e)
-                            pass
-                    data["houses"][index]["workingPopulation"] = int(data["houses"][index]["population"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
-                    data["houses"][index]["men"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
-                    data["houses"][index]["women"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
+                    data["houses"][index]["children"] = totalChildren
+                    data["houses"][index]["elderly"] = totalElders
+
+                    data["houses"][index]["workingPopulation"] = totalWorkingPopulation
+                    data["houses"][index]["men"] = totalMen
+                    data["houses"][index]["women"] = totalWomen
+                    # we re a bit cheating here, simply displaying the value of the last city.. (shh)
+                    data["houses"][index]["elderlyRate"] = cityEldersRate
+                    data["houses"][index]["childrenRate"] = cityChildrenRate
+
                     data["houses"][index]["lowerClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["lowerClassRate"])
                     data["houses"][index]["upperClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["upperClassRate"])
                     data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
@@ -719,7 +755,6 @@ class house_database_handler:
                     data["houses"][index]["nettoIncome"] = data["houses"][index]["income"] - data["houses"][index]["expenses"]
                     popularity = self.calculate_popularity(index)
                     data["houses"][index]["popularity"] = popularity
-
 
                     lower = data["houses"][index]["upperClassTax"] / 200
                     middle = data["houses"][index]["middleClassTax"] / 100
@@ -801,4 +836,5 @@ class house_database_handler:
 
 
 # bruh, line 652 the 1st february 2020
+# 26th february 2020, 839 lines
 # EOF
