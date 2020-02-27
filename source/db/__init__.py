@@ -226,7 +226,7 @@ class house_database_handler:
                 return "`House " + str(houseName) + " bought " + str(amount) + " " + str(item) + " for " + str(totalPrice) + " goldpieces.`"
 
     # look for a specific user, then show its specifications
-    def lookFor(self, user, mode="house", personalMode = "normal", personalValue = None, personalAmount = None, givenCity = "None"):
+    def lookFor(self, user, mode="house", personalMode = "normal", personalValue = None, personalAmount = None, givenCity = "None", playerStatusType = "normal"):
         with open(self.pathToJson) as db:
             data = json.load(db)
             # index set to -1 if below code fails, obsolete with the new try
@@ -297,7 +297,7 @@ class house_database_handler:
 
                 try:
                     if data["houses"][index]["blocked"] == "true":
-                        formattedInfo = "\n```diff\n-YOUR ARMY HAS BEEN BLOCKED DUE TO YOUR DEFICIT\n" + formattedInfo
+                        formattedInfo = "\n```diff\n- YOUR ARMY HAS BEEN BLOCKED DUE TO YOUR DEFICIT```\n" + formattedInfo
                 except:
                     pass # hm
                 return formattedInfo
@@ -323,14 +323,14 @@ class house_database_handler:
 
                 # just show the stats
                 else:
-                    name = str(data["players"][index]["name"]); house = str(data["players"][index]["house"]) ; age = str(data["players"][index]["age"]) ;  attackStats = str(data["players"][index]["attackStats"]) ;  dexterity = str(data["players"][index]["dexterity"]) ; counterStats = str(data["players"][index]["counterStats"]) ; equipment = str(data["players"][index]["equipment"]) ; assassinationCapacity = str(data["players"][index]["assassinationCapacity"]) ; guards = str(data["players"][index]["guards"])
-                    formattedInfo = [
-                        ["House", "Age", "Attack Stats", "counterStats", "Equipment", "Dexterity", "AssinationCapacity", "Guards"],
-                        [house, age, attackStats, counterStats, equipment, dexterity, assassinationCapacity, guards]
-                    ]
-                    #formattedInfo = str("\n```diff\n-        Stats of Player : " + name + ":\nhouse : " + house + "\nAge : " + age + "\nattackStats : " + attackStats + "\ncounterStats : " + counterStats + "\nequipment : " + equipment + "\ndexterity: " + dexterity + "\nassassinationCapacity : " + assassinationCapacity + "\nguards : " + guards + "```")
+                    name = str(data["players"][index]["name"]); house = str(data["players"][index]["house"]) ; age = str(data["players"][index]["age"]) ;  attackStats = str(data["players"][index]["attackStats"]) ;  dexterity = str(data["players"][index]["dexterity"]) ; counterStats = str(data["players"][index]["counterStats"]) ; equipment = str(data["players"][index]["equipment"]) ; assassinationCapacity = str(data["players"][index]["assassinationCapacity"]) ; guards = str(data["players"][index]["guards"]); father = data["players"][index]["father"] ; mother = data["players"][index]["mother"] ; playerGender = data["players"][index]["playerGender"] ; marriageStatus = data["players"][index]["marriageStatus"] ; marriedWith = data["players"][index]["marriedWith"] ; directChild = data["players"][index]["directChild"]
 
-                    return formattedInfo
+                    formattedInfo = [
+                        ["House", "Parents", "Marriage :", "Child", "Age", "Attack Stats", "counterStats", "Equipment", "Dexterity", "AssinationCapacity", "Guards"],
+                        [house, (father, mother), marriageStatus+" with "+marriedWith, directChild, age, attackStats, counterStats, equipment, dexterity, assassinationCapacity, guards]
+                    ]
+
+                    return playerGender, formattedInfo
 
             # guild information
             elif mode == "guilds":
@@ -376,12 +376,12 @@ class house_database_handler:
             return popularity / 100
 
     # create a player character
-    def createUser(self, name, house, age, attack, counter, equipment, dexterity, assassinationCapacity, guards):
+    def createUser(self, name, house, age, attack, counter, equipment, dexterity, assassinationCapacity, guards, playerGender, marriageStatus, marriedWith, directChild, father, mother):
         # check if user exists
         users = self.listUsers()
         if name in users:
             # already exists
-            return("error")
+            return("error, user exists")
         # load and save in memory
         # load and save in mem the json file
         try:
@@ -395,22 +395,30 @@ class house_database_handler:
         # user doesnt exist so go creating it
 
         try:
-            print(self.json_db_content["players"][0])
-            self.json_db_content["players"].append({
-                "name": name,
-                "house": house,
-                "age": age,
-                "attackStats": attack,
-                "counterStats": counter,
-                "equipment": equipment,
-                "dexterity": dexterity,
-                "assassinationCapacity": assassinationCapacity,
-                "guards": guards
-            })
-            content = self.json_db_content
-            self.overwrite_json_db(content)
+            x = (self.json_db_content["players"][0])
         except:
-            pass
+            # this is the first player, so go creating it
+            self.json_db_content["players"] = []
+
+        self.json_db_content["players"].append({
+            "name": name,
+            "house": house,
+            "age": age,
+            "attackStats": attack,
+            "counterStats": counter,
+            "equipment": equipment,
+            "dexterity": dexterity,
+            "assassinationCapacity": assassinationCapacity,
+            "guards": guards,
+            "playerGender": playerGender,
+            "marriageStatus": marriageStatus,
+            "marriedWith" : marriedWith,
+            "directChild": directChild,
+            "father": father,
+            "mother": mother
+        })
+        content = self.json_db_content
+        self.overwrite_json_db(content)
 
 
     # a lot of values, a lot of messy code
@@ -505,6 +513,7 @@ class house_database_handler:
         # finish and write to file
         content = self.json_db_content
         self.overwrite_json_db(content)
+        self.recalculate_economy("all")
         return "worked"
 
 
