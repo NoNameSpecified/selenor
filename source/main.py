@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "N O"
+token = "hiddenTokenSmh"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -224,7 +224,6 @@ async def on_message(message):
         request = db.buyItem(member, item, amount, "info")
         await channel.send(request)
         if "error" in request.lower(): return -1
-        # ++++
         yOrNo = await getInput(message)
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -307,23 +306,17 @@ async def on_message(message):
                 await sendError("Abort", channel)
                 return 1
             amount = int(amount)
-            info = db.lookFor(member, "personal", mode, value, amount)
+            gender, info = db.lookFor(member, "personal", mode, value, amount)
             await channel.send(info)
-        info = db.lookFor(member, "personal", mode, None, None)
+        gender, info = db.lookFor(member, "personal", mode, None, None)
 
-        embed = discord.Embed(title="Player "+str(member)+" : ", color=0x1840ee)
+        embed = discord.Embed(title="Player "+str(member)+" ("+gender+"): ", color=0x1840ee)
         for i in range(len(info[0])):
+            if "none" in str(info[1][i]).lower(): continue
             embed.add_field(name=str(info[0][i]), value=str(info[1][i]), inline=False)
         await channel.send(embed=embed)
-        """
-        embed = discord.Embed(title="Stats for "+str(member)+" : ", color=250000)
-        for i in range(len(info[0])):
-            if info[1][i] == "title":
-                embed.add_field(name=str(info[0][i].upper()), value="RE", inline=False)
-            else:
-                embed.add_field(name=str(info[0][i]), value=str(info[1][i]), inline=True)
-        await channel.send(embed=embed)
-        """
+
+
 
     elif command in ["travel", "move"]:
         destination = param[1]
@@ -402,7 +395,6 @@ async def on_message(message):
 
         #  check again
         await sendRequest("Sending " + str(amount)+ " goldpiece from your house to " + str(moneyReceiver) +".\nConfirm and Checkout ? [y/N]", channel)
-        # ++++
         yOrNo = await getInput(message)
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -439,7 +431,6 @@ async def on_message(message):
 
         await sendRequest("Are you sure you want to change values for "+ str(member) + " [y/N] :", channel)
         sleep(0.1)
-        # ++++
         answer = await getInput(message)
         if answer != "y" and answer != "yes":
             await sendError("Aborted.", channel)
@@ -448,7 +439,6 @@ async def on_message(message):
         sleep(1)
         await sendRequest("Which value do you want to change ? ['army' ; 'taxes']", channel)
         sleep(0.1)
-        # ++++
         choice = await getInput(message)
         if choice not in ['army', 'taxes']:
             await sendError("Unknown option. Abort.", channel)
@@ -504,7 +494,6 @@ async def on_message(message):
             sleep(0.1)
 
         #  check again
-        # ++++
         yOrNo = await getInput(message)
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -532,7 +521,6 @@ async def on_message(message):
         if staffMemberRequest == 0: await sendError("Staff only.", channel) ; return 0
 
         await sendRequest("Sure [y/N]", channel)
-        # ++++
         yOrNo = await getInput(message)
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -554,7 +542,6 @@ async def on_message(message):
         amount = float(amount)
         #  check again
         await sendRequest("Sure [y/N]", channel)
-        # ++++
         yOrNo = await getInput(message)
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -572,21 +559,17 @@ async def on_message(message):
 
         await sendRequest("player to change :", channel)
         sleep(0.1)
-        # ++++
         houseRole = await getInput(message)
         await sendRequest("value to change :", channel)
         sleep(0.1)
-        # ++++
         choice = await getInput(message)
         await sendRequest("new value :", channel)
         sleep(0.1)
-        # ++++
         amount = await getInput(message)
         if choice != "name" and choice!= "equipment": amount = float(amount)
         else: amount = str(await getInput(message))
         #  check again
         await sendRequest("Sure [y/N]", channel)
-        # ++++
         yOrNo = await getInput(message)
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
@@ -602,27 +585,48 @@ async def on_message(message):
     elif command in ["inituser", "init_user", "init2"]:
         if staffMemberRequest == 0: await sendError("Staff only.", channel) ; return 0
 
-        await sendRequest("NICKNAME of player :", channel)
-        uName = await getInput(message)
+        playerType = param[1]
+        playerGender = param[2]
+        if playerType not in ["kid", "adult", "child"]:
+            await sendError("Enter kid or adult as 1st parameter", channel)
+            return
 
-        name = uName
+        if playerGender not in ["male", "female"]:
+            await sendError("Enter man or woman as 2nd parameter", channel)
+            return
+
+        await sendRequest("NICKNAME of player :", channel)
+        name = await getInput(message)
+
         sleep(0.5)
         await sendRequest("house_ROLE of player :", channel)
         house = await getInput(message)
 
-        house = house
         sleep(0.5)
-        await sendRequest("Age of player :", channel)
-        age = await getInput(message)
+        await sendRequest("father nickname of player (none for a bastard):", channel)
+        father = await getInput(message)
 
-        age = int(age)
+        sleep(0.5)
+        await sendRequest("mother nickname of player (none for a bastard):", channel)
+        mother = await getInput(message)
 
-        attack = 8
-        counterStats = 8
+        if playerType in ["kid", "child"]:
+            age = 16
+        elif playerType in ["adult"]:
+            age = 21
+        else:
+            # this is literally impossible
+            pass
+
+        attack = random.randint(1, 6) + 7
+        counterStats = random.randint(1, 6) + 7
         equipment = "basic sword"
-        dexterity = 8
-        assassinationCapacity = 8
+        dexterity = random.randint(1, 6) + 7
+        assassinationCapacity = random.randint(1, 6) + 7
         guards = 1
+        marriageStatus = "sad alone"
+        marriedWith = "None"
+        directChild = "None"
 
         # all setup, check one last time
         await sendRequest("Create user (YES or no)", channel)
@@ -630,7 +634,7 @@ async def on_message(message):
 
         if askHim == "yes" or askHim == "y":
             # this is a loooot of variables lmao
-            db.createUser(name, house, age, attack, counterStats, equipment, dexterity, assassinationCapacity, guards)
+            db.createUser(name, house, age, attack, counterStats, equipment, dexterity, assassinationCapacity, guards, playerGender, marriageStatus, marriedWith, directChild, father, mother)
             await channel.send(worked)
         else:
             await sendError("aborted", channel)
@@ -771,12 +775,13 @@ async def on_message(message):
         print("ree")
         await sendRequest("User to look up : ", channel)
         print("RE")
-        # ++++
         user = await getInput(message)
         print(user)
-        info = db.lookFor(user, "personal", "normal", None, None)
-        embed = discord.Embed(title="Player "+str(user)+" : ", color=0x1840ee)
+        # TODO
+        gender, info = db.lookFor(user, "personal", "normal", None, None, "None")
+        embed = discord.Embed(title="Player "+str(user)+" ("+gender+"): ", color=0x1840ee)
         for i in range(len(info[0])):
+            if "none" in str(info[1][i]).lower(): continue
             embed.add_field(name=str(info[0][i]), value=str(info[1][i]), inline=False)
         await channel.send(embed=embed)
 
