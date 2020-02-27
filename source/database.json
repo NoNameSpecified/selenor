@@ -55,6 +55,24 @@
             }
         }
     ],
-    "players": [],
+    "players": [
+        {
+            "name": "Francis Fool",
+            "house": "house_fool",
+            "age": 70,
+            "attackStats": 10,
+            "counterStats": 8,
+            "equipment": "basic sword",
+            "dexterity": 8,
+            "assassinationCapacity": 13,
+            "guards": 1,
+            "playerGender": "male",
+            "marriageStatus": "sad alone",
+            "marriedWith": "None",
+            "directChild": "None",
+            "father": "none",
+            "mother": "none"
+        }
+    ],
     "guilds": []
 }
