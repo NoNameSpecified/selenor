@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "hiddenTokenSmh"
+token = "No"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -61,7 +61,6 @@ double_house = {
 async def getInput(message):
     print("called")
     answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith(":") == True)
-    print(answer)
     answer = answer.content.split(":")[1].strip()
     answer = answer.lower().strip()
     return answer
@@ -103,10 +102,15 @@ async def on_ready():
 async def on_message(message):
     # check if message is for our bot
     if not(message.content.startswith(BOT_PREFIX)): return 0;
-
+    caseSensitiveCommands = ["grep"]
     usedPrefix = message.content[0]
     print("Chosen Prefix:", usedPrefix)
-    command = message.content.split(usedPrefix)[1].lower().split(" ")
+    # if the command needs case sensitive parameters, such as when entering values from a db
+    if message.content.split(usedPrefix)[1].lower().split(" ")[0] in caseSensitiveCommands:
+        command = message.content.split(usedPrefix)[1].split(" ")
+    else:
+        command = message.content.split(usedPrefix)[1].lower().split(" ")
+
 
     i = 1
     param = ["None", "None", "None", "None"]
@@ -122,6 +126,7 @@ async def on_message(message):
 
     command = command[0]
     # to use after
+    guild = "None"
     channel = message.channel
     server = message.guild
     nickName = message.author.display_name
@@ -140,8 +145,8 @@ async def on_message(message):
             print("Request from", member)
 
     for i in range(len(memberRoles)):
-        if "guild of " in memberRoles[i]:
-            guildRole = memberRoles[i].split()
+        if "guild_of_" in memberRoles[i]:
+            guildRole = memberRoles[i].split("_")
             print("Got Guild Request from", guildRole)
             print(guildRole)
             guild = guildRole[2]
@@ -206,6 +211,8 @@ async def on_message(message):
         await channel.send("ok")
 
     elif command in ["buy", "shop"]:
+        # default
+        cityName = "None"
         item = param[1] ; amount = param[2]
         if houseManagingPermission == 0 : await sendError("House leader only.", channel) ; return 0
         # if he doesnt specify, just list items
@@ -221,6 +228,17 @@ async def on_message(message):
         if item != "None" and amount == "None":
             amount = 1
 
+        if item == "city":
+            amount = 1
+            await sendRequest("City Name", channel)
+            cityName = await getInput(message)
+            print(cityName)
+
+            await sendRequest("City Coordinates, format : X;Y", channel)
+            rawCoor = await getInput(message)
+            coor = rawCoor.split(";")
+            coor = (int(coor[0]), int(coor[1]))
+            
         request = db.buyItem(member, item, amount, "info")
         await channel.send(request)
         if "error" in request.lower(): return -1
@@ -229,7 +247,7 @@ async def on_message(message):
             await sendError("Abort.", channel)
             return 1
 
-        tryOrFail = db.buyItem(member, item, amount, "normal")
+        tryOrFail = db.buyItem(member, item, amount, "normal", cityName, coor)
         await channel.send(tryOrFail)
 
 
