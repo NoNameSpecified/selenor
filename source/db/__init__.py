@@ -184,12 +184,13 @@ class house_database_handler:
             return "paid "+str(amount)
 
     #  houses can buy stuff
-    def buyItem(self, house, item, amount, mode="normal"):
+    def buyItem(self, house, item, amount, mode="normal", villageName="None", villageCoordinates="None"):
+        print(villageName, villageCoordinates)
         with open(self.pathToJson, "r") as db:
             amount = int(amount)
             data = json.load(db)
             houseName = house
-            house = self.find_index_in_db(data["houses"], house)
+            index = self.find_index_in_db(data["houses"], house)
             items, prices = self.listItems()
             if item not in items:
                 return "```Error. Did not found item (list items with \\buy)```"
@@ -205,20 +206,78 @@ class house_database_handler:
                 return "`Buying " + str(amount) + " " + str(item) + " for " + str(totalPrice) + " goldpieces ? [y/N]`"
             elif mode == "normal":
                 # take money
-                if totalPrice > data["houses"][house]["totalGold"]:
+                if totalPrice > data["houses"][index]["totalGold"]:
                     return "`Not enough funds.`"
-                data["houses"][house]["totalGold"] = data["houses"][house]["totalGold"] - totalPrice
+                data["houses"][index]["totalGold"] = data["houses"][index]["totalGold"] - totalPrice
                 try:
-                    data["houses"][house]["inventory"][item] = data["houses"][house]["inventory"][item] + amount
+                    data["houses"][index]["inventory"][item] = data["houses"][index]["inventory"][item] + amount
                 except:
-                    data["houses"][house]["inventory"] = {}
-                    data["houses"][house]["inventory"][item] = amount
+                    data["houses"][index]["inventory"] = {}
+                    data["houses"][index]["inventory"][item] = amount
 
                 if item == "school":
-                    data["houses"][house]["lowerClassRate"] = data["houses"][house]["lowerClassRate"] - 0.03
+                    data["houses"][index]["lowerClassRate"] = data["houses"][index]["lowerClassRate"] - 0.03
 
                 elif item == "city":
-                    data["houses"][house]["population"] = data["houses"][house]["population"] + 15000
+                    for i in range(len(data["houses"])):
+                        try:
+                            houseCities = list(data["houses"][i]["cities"].keys())
+
+                            for insideIndex in range(len(houseCities)):
+                                coordinates = tuple(data["houses"][i]["cities"][houseCities[insideIndex]]["coordinates"])
+                                if houseCities[insideIndex] == villageName or coordinates == villageCoordinates:
+                                    return "error. village exists (check name or coordinates)"
+
+                        except Exception as e:
+                            print(e)
+                            pass
+                    if villageName == "None":
+                        return "b r u h"
+                    try:
+                        cityData = data["houses"][index]["cities"]
+
+                        diceResult = self.dice(100, 20)
+                        population = diceResult * 10
+
+                        natality = 5 / 100
+                        childrenRate = self.dice(1, 7) / 100
+                        elderlyRate = self.dice(1, 7) / 100
+                        mortality = 5 / 100
+                        popularity = 80 / 100
+                        if data["houses"][index]["type"] == "major": immigration = 40 / 100
+                        elif data["houses"][index]["type"] == "minor": immigration = 10 / 100
+                        diceResult = self.dice(1, 20)
+                        menPart = (diceResult + 40) / 100
+                        children = int((childrenRate) * population)
+                        elderly = int((elderlyRate) * population)
+                        workingPopulation = int(population - children - elderly)
+                        womenPart = 1 - menPart
+                        men = int((menPart) * workingPopulation)
+                        women = int(workingPopulation - men)
+
+                        cityData[villageName] = {
+                                    "coordinates": villageCoordinates,
+                                    "population" : population,
+                                    "menPart" : menPart,
+                                    "womenPart" : womenPart,
+                                    "men" : men,
+                                    "immigration": immigration,
+                                    "children" : children,
+                                    "elderly" : elderly,
+                                    "workingPopulation" : workingPopulation,
+                                    "natality" : natality,
+                                    "childrenRate" : childrenRate,
+                                    "elderlyRate" : elderlyRate,
+                                    "mortality" : mortality,
+                                                }
+
+
+
+                    except Exception as e:
+                        print(e)
+                        return "Yo, some error i guess"
+
+
 
                 self.log("House " +str(houseName) + " bought " +str(item) + ". Amount : " + str(amount) + " for " + str(totalPrice) + " goldpieces")
                 # finish, write, close
@@ -538,7 +597,7 @@ class house_database_handler:
                 # this will be called before the actual change
                 # to get the maximumg amount of troops the player can afford
                 if mode == "info":
-                    maxExpenses = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]
+                    maxExpenses = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"] - (data["houses"][index]["guards"] * self.guardsSalary)
                     maximumTroopsBeforeDeficit = maxExpenses // self.armySalary
                     return str(maximumTroopsBeforeDeficit)
 
@@ -729,7 +788,7 @@ class house_database_handler:
                             totalWorkingPopulation = totalWorkingPopulation + cityWorkingPopulation
                             averageNatality = averageNatality + cityNatality
                             averageMortality = averageMortality + cityMortality
-                            totalPopulation = cityData["population"]
+                            totalPopulation = cityData["population"] + totalPopulation
                             cityChildrenRate = cityData["childrenRate"]
                             cityEldersRate = cityData["elderlyRate"]
 
