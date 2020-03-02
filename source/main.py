@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "No"
+token = "big F"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -102,7 +102,7 @@ async def on_ready():
 async def on_message(message):
     # check if message is for our bot
     if not(message.content.startswith(BOT_PREFIX)): return 0;
-    caseSensitiveCommands = ["grep"]
+    caseSensitiveCommands = ["grep", "grab","staff1", "changeHouse"]
     usedPrefix = message.content[0]
     print("Chosen Prefix:", usedPrefix)
     # if the command needs case sensitive parameters, such as when entering values from a db
@@ -238,7 +238,7 @@ async def on_message(message):
             rawCoor = await getInput(message)
             coor = rawCoor.split(";")
             coor = (int(coor[0]), int(coor[1]))
-            
+
         request = db.buyItem(member, item, amount, "info")
         await channel.send(request)
         if "error" in request.lower(): return -1
@@ -324,7 +324,7 @@ async def on_message(message):
                 await sendError("Abort", channel)
                 return 1
             amount = int(amount)
-            gender, info = db.lookFor(member, "personal", mode, value, amount)
+            info = db.lookFor(member, "personal", mode, value, amount)
             await channel.send(info)
         gender, info = db.lookFor(member, "personal", mode, None, None)
 
@@ -556,8 +556,10 @@ async def on_message(message):
         if houseRole == "None" or choice == "None" or amount == "None":
             await sendError("Use as \\staff1 house_name choice newValue", channel)
             return 0
-
-        amount = float(amount)
+        try:
+            amount = float(amount)
+        except:
+            pass
         #  check again
         await sendRequest("Sure [y/N]", channel)
         yOrNo = await getInput(message)
@@ -584,8 +586,10 @@ async def on_message(message):
         await sendRequest("new value :", channel)
         sleep(0.1)
         amount = await getInput(message)
-        if choice != "name" and choice!= "equipment": amount = float(amount)
-        else: amount = str(await getInput(message))
+        try:
+            amount = float(amount)
+        except:
+            pass
         #  check again
         await sendRequest("Sure [y/N]", channel)
         yOrNo = await getInput(message)
