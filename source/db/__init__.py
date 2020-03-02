@@ -127,10 +127,11 @@ class house_database_handler:
 
     # uses below function, updates all houses by looping through them
     def updateAll(self):
+        self.recalculate_economy("all")
         x = self.listHouses()
         for house in x:
             self.updateHouse(house)
-            self.taxes(house, "royal_administration")
+            self.taxes(house, "house_royal")
 
         print("\n\n\nUPDATE FINISHED HOUSES\n\n\n")
         x = self.listUsers()
@@ -138,6 +139,7 @@ class house_database_handler:
             self.updatePlayer(player)
         print("\n\n\nUPDATE FINISHED PLAYERS\n\n\n")
         self.log("Updated all houses and players and paid taxes.")
+        self.recalculate_economy("all")
         return "All users have been updated"
 
 
@@ -644,6 +646,7 @@ class house_database_handler:
             try:
                 index = self.find_index_in_db(data["players"], user)
             except:
+                print("Error from player\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
                 return "User not found"
             if data["players"][index]["age"] > 16:
                 data["players"][index]["age"] = data["players"][index]["age"] + 1
@@ -654,9 +657,7 @@ class house_database_handler:
 
     # this could be optimized
     def updateHouse(self, user=None, rates="rates.json"):
-        """
-        ### TODO TODO TODO TODO BEFORE NEXT UPDATE NEXT SUNDAY
-        """
+
         if user == None: return "No user specified"
         user = user.lower()
         debt = False
@@ -671,72 +672,25 @@ class house_database_handler:
             """
                 many things to change.. yes it took me some time too lmao
             """
-            #natality = pass
-            #mortality = pass
-            newPopulation = data["houses"][index]["totalPopulation"] + (data["houses"][index]["totalPopulation"] * data["houses"][index]["natality"]) - (data["houses"][index]["totalPopulation"] * data["houses"][index]["mortality"])
-            #popularity = manualPopularity
-            children, elderly = int(data["houses"][index]["totalPopulation"] * data["houses"][index]["childrenRate"]), int(data["houses"][index]["totalPopulation"] * data["houses"][index]["elderlyRate"])
-            workingPopulation = int(data["houses"][index]["totalPopulation"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
-            men = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
-            women = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
-            #knights, guards, squires = 0, 0, 0
 
-            for ii in range(len(data["houses"])):
+            totalPopulation = 0
+            try:
+                houseCities = list(data["houses"][index]["cities"].keys())
+                for insideIndex in range(len(houseCities)):
+                    cityData = data["houses"][index]["cities"][houseCities[insideIndex]]
+                    cityPopulation = cityData["population"] + (cityData["population"] * cityData["natality"]) - (cityData["population"] * cityData["mortality"]) + (cityData["population"] * cityData["immigration"])
+                    cityData["population"] = cityPopulation
 
-                house = data["houses"][ii]["name"].split("_")[1]
-                guards = self.calculate_guards(house)
+                    totalPopulation = totalPopulation + cityPopulation
 
-            data["houses"][index]["guards"] = guards
-            lowerClass = int(workingPopulation * data["houses"][index]["lowerClassRate"])
-            upperClass = int(workingPopulation * data["houses"][index]["upperClassRate"])
-            middleClass = int(workingPopulation - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
+            except Exception as e:
+                print("\n\n\n\n\n\n\n\n\n\n\n\n",e)
+                pass
 
-            natality = (data["houses"][index]["health"] / 100) * 5
-            mortality = 1 + (data["houses"][index]["health"] / 100)
+            data["houses"][index]["totalPopulation"] = totalPopulation
 
-            #guildTax = pass
-            #vassalTax = pass
-            #lordTax = pass
-            income = middleClass * data["houses"][index]["middleClassTax"] + lowerClass * data["houses"][index]["lowerClassTax"] + upperClass * data["houses"][index]["upperClassTax"]
-            expenses = data["houses"][index]["army"] * self.armySalary + data["houses"][index]["knights"] * self.knightsSalary + data["houses"][index]["guards"] * self.guardsSalary + data["houses"][index]["squires"] * 0
-            nettoIncome = data["houses"][index]["income"] - data["houses"][index]["expenses"]
-            totalGold = data["houses"][index]["totalGold"] + nettoIncome
+            data["houses"][index]["totalGold"] = data["houses"][index]["totalGold"] + data["houses"][index]["income"] - data["houses"][index]["expenses"]
 
-            #data["houses"][index]["name"] = pass
-            data["houses"][index]["totalPopulation"] = newPopulation
-            data["houses"][index]["natality"] = natality / 100
-            #data["houses"][index]["childrenRate"] = pass
-            #data["houses"][index]["elderlyRate"] = pass
-            data["houses"][index]["mortality"] = mortality / 100
-            #data["houses"][index]["popularity"] = pass
-            data["houses"][index]["children"] = children
-            data["houses"][index]["elderly"] = elderly
-            data["houses"][index]["workingPopulation"] = workingPopulation
-            #data["houses"][index]["menPart"] = pass
-            #data["houses"][index]["womenPart"] = pass
-            data["houses"][index]["men"] = men
-            data["houses"][index]["women"] = women
-            #data["houses"][index]["lowerClassRate"] = pass
-            #data["houses"][index]["upperClassRate"] = pass
-            #data["houses"][index]["lowerClassTax"] = pass
-            #data["houses"][index]["middleClassTax"] = pass
-            #data["houses"][index]["upperClassTax"] = pass
-            data["houses"][index]["lowerClass"] = lowerClass
-            data["houses"][index]["middleClass"] = middleClass
-            data["houses"][index]["upperClass"] = upperClass
-            #data["houses"][index]["army"] = pass
-            # economy sector
-            #data["houses"][index]["incomeTax"] = pass
-            #data["houses"][index]["guildTax"] = pass
-            #data["houses"][index]["vassalTax"] = pass
-            #data["houses"][index]["lordTax"] = pass
-            popularity = self.calculate_popularity(index)
-            data["houses"][index]["popularity"] = popularity
-
-            data["houses"][index]["income"] = income
-            data["houses"][index]["expenses"] = expenses
-            data["houses"][index]["totalGold"] = totalGold
-            data["houses"][index]["nettoIncome"] = nettoIncome
             if data["houses"][index]["totalGold"] < 0 :
                 data["houses"][index]["blocked"] = "true"
                 debt = True
@@ -744,9 +698,6 @@ class house_database_handler:
             else:
                 data["houses"][index]["blocked"] = "false"
 
-            #data["houses"][index]["knights"] = knights
-            #data["houses"][index]["guards"] = guards
-            #data["houses"][index]["squires"] = squires
             self.log("Updated house " + str(user))
             #overwrite old file
             self.overwrite_json_db(data)
