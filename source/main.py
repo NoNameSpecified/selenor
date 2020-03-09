@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "big F"
+token = "Njc1NjU0ODM4NDk5MDE2NzQ1.XlEkeg.xGg_XDEv8rtq1ZeAeEQ85KX6gGA"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -155,15 +155,12 @@ async def on_message(message):
     """
     actually start processing the command
     """
-    if command == "liststaff":
-        await channel.send(staffMembers)
-
 
     # this handles
     # ["l", "i", "s", "t", "s"]
     # requests
 
-    elif command in ["listhouses", "list1"]:
+    if command in ["listhouses", "list1"]:
         try:
             x = db.listHouses()
             await channel.send(x)
@@ -211,6 +208,7 @@ async def on_message(message):
         await channel.send("ok")
 
     elif command in ["buy", "shop"]:
+        coor = ""
         # default
         cityName = "None"
         item = param[1] ; amount = param[2]
@@ -479,8 +477,8 @@ async def on_message(message):
 
             # calculate future salary here
             futureSalary = salary * amount
-            # inform the sender
-            await sendRequest("You're monthly (weekly irl) EXPENSES will grow by\n- " + str(futureSalary) + " gold pieces.\nProceed & checkout ? [y/N]", channel)
+            # inform the senders
+            await sendRequest("New ARMY Expenses : \n- " + str(futureSalary) + " gold pieces.\nProceed & checkout ? [y/N]", channel)
             sleep(0.1)
 
         elif choice == "taxes":
@@ -853,7 +851,6 @@ async def on_message(message):
     elif command in ["man", "manual", "help"]:
         category = param[1]
 
-
         if param[1] == "None":
             embed=discord.Embed(title="Manual", description="Command Table :", color=0xdd7b28)
             embed.add_field(name="General : ", value="General commands, lists etc\n--> "+usedPrefix+"man general", inline=False)
@@ -861,7 +858,6 @@ async def on_message(message):
             embed.add_field(name="Staff : ", value="Staff related\n--> "+usedPrefix+"man staff", inline=False)
         elif param[1].lower() == "general":
             embed=discord.Embed(title="Manual", description="Category General :", color=0xc5bcc5)
-            embed.add_field(name=usedPrefix+"listStaff", value="List Staff\nAliases : "+usedPrefix+"None", inline=False)
             embed.add_field(name=usedPrefix+"listHouses", value="List Houses\nAliases : "+usedPrefix+"list1", inline=False)
             embed.add_field(name=usedPrefix+"listPlayers", value="List Players\nAliases : "+usedPrefix+"list2", inline=False)
             embed.add_field(name=usedPrefix+"listGuilds", value="List Guilds\nAliases : "+usedPrefix+"list3", inline=False)
@@ -894,9 +890,7 @@ async def on_message(message):
         else:
             embed=discord.Embed(title="Manual", description="General Search", color=0xc5bcc5)
 
-            if category in ["liststaff"]:
-                embed.add_field(name=usedPrefix+"listStaff", value="List Staff\nAliases : "+usedPrefix+"None", inline=False)
-            elif category in ["listhouses", "list1"]:
+            if category in ["listhouses", "list1"]:
                 embed.add_field(name=usedPrefix+"listHouses", value="List Houses\nAliases : "+usedPrefix+"list1", inline=False)
             elif category in ["listplayers", "list2"]:
                 embed.add_field(name=usedPrefix+"listPlayers", value="List Players\nAliases : "+usedPrefix+"list2", inline=False)
