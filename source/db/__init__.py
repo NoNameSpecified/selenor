@@ -135,8 +135,8 @@ class house_database_handler:
 
         print("\n\n\nUPDATE FINISHED HOUSES\n\n\n")
         x = self.listUsers()
-        for player in x:
-            self.updatePlayer(player)
+        for i in range(len(x)):
+            self.updatePlayer(i)
         print("\n\n\nUPDATE FINISHED PLAYERS\n\n\n")
         self.log("Updated all houses and players and paid taxes.")
         self.recalculate_economy("all")
@@ -211,10 +211,18 @@ class house_database_handler:
                 if totalPrice > data["houses"][index]["totalGold"]:
                     return "`Not enough funds.`"
                 data["houses"][index]["totalGold"] = data["houses"][index]["totalGold"] - totalPrice
+
+                # check if theres an initialised inventory
+                try:
+                    itemNames = list(data["houses"][index]["inventory"].keys())
+                    print(data["houses"][index]["inventory"][itemNames[0]])
+                except:
+                    data["houses"][index]["inventory"] = {}
+
+                # add <amount> to the existent item ; or create a new item index
                 try:
                     data["houses"][index]["inventory"][item] = data["houses"][index]["inventory"][item] + amount
                 except:
-                    data["houses"][index]["inventory"] = {}
                     data["houses"][index]["inventory"][item] = amount
 
                 if item == "school":
@@ -235,6 +243,7 @@ class house_database_handler:
                             pass
                     if villageName == "None":
                         return "b r u h"
+                    # TODO : change this and other city creation to one function
                     try:
                         cityData = data["houses"][index]["cities"]
 
@@ -272,8 +281,6 @@ class house_database_handler:
                                     "elderlyRate" : elderlyRate,
                                     "mortality" : mortality,
                                                 }
-
-
 
                     except Exception as e:
                         print(e)
@@ -639,19 +646,14 @@ class house_database_handler:
         return "```\nYay ! It worked !```"
 
     # update their age and stuff
-    def updatePlayer(self, player):
+    def updatePlayer(self, index):
         # get user index
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
-            try:
-                index = self.find_index_in_db(data["players"], user)
-            except:
-                print("Error from player\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-                return "User not found"
             if data["players"][index]["age"] > 16:
-                data["players"][index]["age"] = data["players"][index]["age"] + 1
+                data["players"][index]["age"] += 1
             else:
-                data["players"][index]["age"] = data["players"][index]["age"] + 2
+                data["players"][index]["age"] += 2
             self.overwrite_json_db(data)
             return "done"
 
