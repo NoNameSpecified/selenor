@@ -429,13 +429,13 @@ class house_database_handler:
             middleTax = data["houses"][index]["middleClassTax"]
             lowerTax = data["houses"][index]["lowerClassTax"]
             upperTax = data["houses"][index]["upperClassTax"]
-            if middleTax > 70:
+            if middleTax > 70 or upperTax > 150 or lowerTax > 50:
                 popularity = 5
-            elif middleTax > 51:
+            elif middleTax > 51 or upperTax > 100 or lowerTax > 30:
                 popularity = 20
-            elif middleTax > 31:
+            elif middleTax > 31 or upperTax > 50 or lowerTax > 20:
                 popularity = 50 - random.randint(0, 10)
-            elif middleTax > 21:
+            elif middleTax > 21 or upperTax > 30:
                 popularity = 60 - random.randint(0, 20)
             elif middleTax > 11:
                 popularity = 70 - random.randint(0, 20)
@@ -592,23 +592,21 @@ class house_database_handler:
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
             index = self.find_index_in_db(data["houses"], houseRole)
-            # this will be called when informing the user
+
+            # this will be called before the actual change
+            # to get the maximumg amount of troops the player can afford
             if mode == "info":
                 maxExpenses = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]
                 massTroops = maxExpenses // self.armySalary
-                return str(massTroops)
+                #return str(massTroops)
+                return str(data["houses"][index]["workingPopulation"])
 
         if mode == "normal":
             with open(self.pathToJson, "r") as db:
                 data = json.load(db)
                 index = self.find_index_in_db(data["houses"], houseRole)
 
-                # this will be called before the actual change
-                # to get the maximumg amount of troops the player can afford
-                if mode == "info":
-                    maxExpenses = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"] - (data["houses"][index]["guards"] * self.guardsSalary)
-                    maximumTroopsBeforeDeficit = maxExpenses // self.armySalary
-                    return str(maximumTroopsBeforeDeficit)
+
 
                 if choice == "army" and amount > data["houses"][index]["totalPopulation"] - data["houses"][index]["elderly"] - data["houses"][index]["children"] - 1:
                     return "too much army"
@@ -747,7 +745,6 @@ class house_database_handler:
 
                         averageNatality = averageNatality / len(houseCities)
                         averageMortality = averageMortality / len(houseCities)
-                        print("\n\n",totalWomen)
 
                     except Exception as e:
                         print(e)
