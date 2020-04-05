@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "Njc1NjU0ODM4NDk5MDE2NzQ1.XmafAw.KBZ-ruKrY-l0kj5OrP1_Ii-yNbw"
+token = "Njg4MTY1NzgxNTkwMzc2NDQ5.XmwWWA.ZMWr0Y9h0KrGsQS4SAWdivxw1q8"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -95,7 +95,7 @@ async def createEmbed(title="Aha", description="...", channel="REE", color="norm
 # ~~~ set custom status ~~~
 @client.event
 async def on_ready(): #The Crown of Selenor
-    activity = discord.Game(name="Helping tracking the traitor.")
+    activity = discord.Game(name="It's a cute cat right")
     await client.change_presence(status=discord.Status.online, activity=activity)
     channel = client.get_channel(653291682791555082)
 
@@ -191,6 +191,24 @@ async def on_message(message):
         await channel.send(embed=embed)
         return 0
 
+    elif command in ["listcities", "list5", "cities"]:
+
+        rawCityData = db.listCities()
+        embed=discord.Embed(title="Cities", description="Current Cities in Selenor", color=0xffffff)
+        houses = list(rawCityData.keys())
+
+        for i in range(len(houses)):
+            houseName = houses[i]
+            houseReport = ""
+            for innerIndex in range(len(rawCityData[houseName])):
+                cityName = rawCityData[houseName][innerIndex][0]
+                cityCoordinates = rawCityData[houseName][innerIndex][1]
+                houseReport = houseReport + "\nCity : "+str(cityName)+"    Coordinates : "+str(cityCoordinates)
+
+            embed.add_field(name="House "+houseName, value=houseReport, inline=True)
+
+        await channel.send(embed=embed)
+        return 0
 
         """
 
@@ -209,6 +227,7 @@ async def on_message(message):
         await channel.send("ok")
 
     elif command in ["buy", "shop"]:
+        print(member)
         coor = ""
         # default
         cityName = "None"
@@ -226,6 +245,23 @@ async def on_message(message):
         # he can buy more, but first, lets go with 1 by default
         if item != "None" and amount == "None":
             amount = 1
+
+        try:
+            if double_house[member]:
+                print(double_house[member])
+                await sendRequest("Buy from "+ str(member) + " or " + str(double_house[member]) + " [1/2] :", channel)
+                sleep(0.1)
+                memberChoice = await getInput(message)
+                print(memberChoice)
+                if memberChoice != "1" and memberChoice != "2":
+                    await sendError("Aborted.")
+                    return 1
+                elif memberChoice == "2":
+                    member = double_house[member]
+
+        except:
+            pass
+
 
         if item == "city":
             amount = 1
@@ -245,7 +281,7 @@ async def on_message(message):
         if yOrNo != "y" and yOrNo != "yes":
             await sendError("Abort.", channel)
             return 1
-
+        print(member)
         tryOrFail = db.buyItem(member, item, amount, "normal", cityName, coor)
         await channel.send(tryOrFail)
 
@@ -370,7 +406,7 @@ async def on_message(message):
         try:
             amount = int(amount)
         except:
-            await sendErro("Invalid number", channel)
+            await sendError("Invalid number", channel)
             return -1
 
         try:
@@ -426,7 +462,7 @@ async def on_message(message):
     elif command in ["change"]:
         if houseManagingPermission == 0 : await sendError("House Leaders only.", channel) ; return 0
 
-
+        houseRole = member
         print(memberRoles)
         ARMY_SALARY = 100 # useless, obsolete ? maybe..
 
@@ -446,12 +482,14 @@ async def on_message(message):
         except:
             pass
 
+        """
         await sendRequest("Are you sure you want to change values for "+ str(member) + " [y/N] :", channel)
         sleep(0.1)
         answer = await getInput(message)
         if answer != "y" and answer != "yes":
             await sendError("Aborted.", channel)
             return 1
+        """
 
         sleep(1)
         await sendRequest("Which value do you want to change ? ['army' ; 'taxes']", channel)
@@ -461,7 +499,24 @@ async def on_message(message):
             await sendError("Unknown option. Abort.", channel)
 
         if choice.lower() == "army":
+            salary = ARMY_SALARY
+            """
+            # currently disabled as the new system is per city
             updated = db.changeSpecific(member, "army", 0, 0, "info")#
+            await sendEmbed("Report", "You can afford maximum " + updated + " troops", channel)
+            """
+            #  new system
+            sleep(0.5)
+            await channel.send("**INFO**: `You can train troops from a specific city, where the soldiers will be deployed once trained (after 2 days). Thus, you cannot deploy all your troops at once in one city.`")
+            await sendRequest("City to train troops from : ", channel)
+            sleep(0.1)
+
+            cityToTrainFrom = (await getInput(message))
+
+            updated = db.changeSpecific(member, "army", 0, 0, "info", cityToTrainFrom)#
+            if "END" in updated:
+                await sendError("Error. City not found.")
+                return
             await sendEmbed("Report", "You can afford maximum " + updated + " troops", channel)
 
             sleep(0.5)
@@ -473,8 +528,7 @@ async def on_message(message):
             except:
                 await sendError("hmmm", channel)
                 return "error"
-            if choice == "army":
-                salary = ARMY_SALARY
+
 
             # calculate future salary here
             futureSalary = salary * amount
@@ -518,7 +572,7 @@ async def on_message(message):
         await sendEmbed("processing request.", "...", channel)
         print("Processing for ", member, "\nWants to change ", choice, ", ", amount)
         # use the database handler
-        updated = db.changeSpecific(member, choice, amount, futureSalary)
+        updated = db.changeSpecific(member, choice, amount, futureSalary, "normal", cityToTrainFrom)
         # and its all done ! lets inform the user
         # // or if there was an error returned, send error message
         await channel.send(updated)
@@ -863,6 +917,7 @@ async def on_message(message):
             embed.add_field(name=usedPrefix+"listPlayers", value="List Players\nAliases : "+usedPrefix+"list2", inline=False)
             embed.add_field(name=usedPrefix+"listGuilds", value="List Guilds\nAliases : "+usedPrefix+"list3", inline=False)
             embed.add_field(name=usedPrefix+"items", value="List items and prices in shop\nAliases : "+usedPrefix+"list4", inline=False)
+            embed.add_field(name=usedPrefix+"cities", value="List cities and their coordinates\nAliases : "+usedPrefix+"list5", inline=False)
 
         elif param[1].lower() == "game":
             embed=discord.Embed(title="Manual", description="Category Game :", color=0x8ae1c2)
@@ -899,6 +954,8 @@ async def on_message(message):
                 embed.add_field(name=usedPrefix+"listGuilds", value="List Guilds\nAliases : "+usedPrefix+"list3", inline=False)
             elif category in ["items", "list4"]:
                 embed.add_field(name=usedPrefix+"items", value="List items and prices in shop\nAliases : "+usedPrefix+"list4", inline=False)
+            elif category in ["cities", "list5"]:
+                embed.add_field(name=usedPrefix+"cities", value="List cities and their coordinates\nAliases : "+usedPrefix+"list5", inline=False)
             elif category in ["buy", "shop"]:
                 embed.add_field(name=usedPrefix+"buy CHOICE AMOUNT", value="HOUSE LEADER ONLY\nBuy things from the inventory\nAliases : "+usedPrefix+"shop", inline=False)
             elif category in ["send", "pay"]:
