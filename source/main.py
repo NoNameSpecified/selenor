@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "Njg4MTY1NzgxNTkwMzc2NDQ5.XmwWWA.ZMWr0Y9h0KrGsQS4SAWdivxw1q8"
+token = "i just had to change the token again goddamnit"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
