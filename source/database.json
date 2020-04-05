@@ -50,7 +50,8 @@
                     "natality": 0,
                     "childrenRate": 0,
                     "elderlyRate": 0,
-                    "mortality": 0
+                    "mortality": 0,
+                    "army": 0
                 }
             }
         }
