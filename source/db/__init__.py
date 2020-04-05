@@ -109,6 +109,29 @@ class house_database_handler:
                 y.append(data["shop"][name])
             return x,y
 
+    def listCities(self):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+            rawCityData = {}
+
+            houseCount = len(self.listHouses())
+            for index in range(houseCount):
+                try:
+
+                    houseCities = list(data["houses"][index]["cities"].keys())
+                    houseCityList = []
+                    for insideIndex in range(len(houseCities)):
+                        coordinates = tuple(data["houses"][index]["cities"][houseCities[insideIndex]]["coordinates"])
+                        houseCityList.append( ( houseCities[insideIndex], (coordinates)) )
+
+                    rawCityData[data["houses"][index]["name"]] = houseCityList
+
+                except Exception as e:
+                    print("bruh", e)
+                    pass
+            return rawCityData
+
+
     # merge two houses, e.g if one took over the other
     def mergeHouses(self, houseFrom, houseTo):
         with open(self.pathToJson, "r") as db:
@@ -360,7 +383,7 @@ class house_database_handler:
                         print(data["houses"][index]["cities"][givenCity])
                     except:
                         return "❌ - City Not Found."
-                    formattedInfo = str("\n```diff\n-        Population of city " + givenCity + ":\nCoordinates : \t"+ str(tuple(data["houses"][index]["cities"][givenCity]["coordinates"])) +"\nPopulation :  \t" + str(data["houses"][index]["cities"][givenCity]["population"]) + "\nMen :         \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["menPart"]) + "\nWomen :       \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["womenPart"]) + "\nChildren :    \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["childrenRate"]) + "\nElders :      \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["elderlyRate"]) + "\nWorking Pop :     " + str(data["houses"][index]["cities"][givenCity]["population"] - data["houses"][index]["cities"][givenCity]["children"] - data["houses"][index]["cities"][givenCity]["elderly"]) + "\nImmigration :     " + str(data["houses"][index]["cities"][givenCity]["immigration"] * 100) + "\nNatality :        " + str(data["houses"][index]["cities"][givenCity]["natality"] * 100) + "\nMortality :       " + str(data["houses"][index]["cities"][givenCity]["mortality"] * 100) + "\n```")
+                    formattedInfo = str("\n```diff\n-        Population of city " + givenCity + ":\nCoordinates : \t"+ str(tuple(data["houses"][index]["cities"][givenCity]["coordinates"])) +"\nPopulation :  \t" + str(data["houses"][index]["cities"][givenCity]["population"]) + "\nMen :         \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["menPart"]) + "\nWomen :       \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["womenPart"]) + "\nChildren :    \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["childrenRate"]) + "\nElders :      \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["elderlyRate"]) + "\nWorking Pop :     " + str(data["houses"][index]["cities"][givenCity]["population"] - data["houses"][index]["cities"][givenCity]["children"] - data["houses"][index]["cities"][givenCity]["elderly"]) + "\nSoldiers :      " + str(data["houses"][index]["cities"][givenCity]["army"]) + "\nImmigration :     " + str(data["houses"][index]["cities"][givenCity]["immigration"] * 100) + "\nNatality :        " + str(data["houses"][index]["cities"][givenCity]["natality"] * 100) + "\nMortality :       " + str(data["houses"][index]["cities"][givenCity]["mortality"] * 100) + "\n```")
 
 
                 try:
@@ -587,7 +610,7 @@ class house_database_handler:
 
     # this is just to change some values without upating all values
     # to update a whole user (new population etc.) look below
-    def changeSpecific(self, houseRole, choice, amount, futureExpenses, mode="normal"):
+    def changeSpecific(self, houseRole, choice, amount, futureExpenses, mode="normal", cityToTrainFrom = "None"):
 
         with open(self.pathToJson, "r") as db:
             data = json.load(db)
@@ -596,10 +619,18 @@ class house_database_handler:
             # this will be called before the actual change
             # to get the maximumg amount of troops the player can afford
             if mode == "info":
-                maxExpenses = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]
-                massTroops = maxExpenses // self.armySalary
+                #maxExpenses = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]
+                #massTroops = maxExpenses // self.armySalary
                 #return str(massTroops)
-                return str(data["houses"][index]["workingPopulation"])
+                houseCities = list(data["houses"][index]["cities"].keys())
+
+                if cityToTrainFrom not in houseCities:
+                    return "Error. City not found. END"
+                for i in range(len(houseCities)):
+                    if houseCities[i] == cityToTrainFrom:
+                        cityIndex = i
+                        break
+                return str(data["houses"][index]["cities"][houseCities[cityIndex]]["workingPopulation"])
 
         if mode == "normal":
             with open(self.pathToJson, "r") as db:
@@ -607,18 +638,46 @@ class house_database_handler:
                 index = self.find_index_in_db(data["houses"], houseRole)
 
 
+                if choice == "army":
+                    if amount > data["houses"][index]["totalPopulation"] - data["houses"][index]["elderly"] - data["houses"][index]["children"] - 1:
+                        return "too much army"
+                    if futureExpenses > data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]:
+                        return "```diff\n- Your future expenses would be higher as your income.\nThis is not possible to change over he bot.\nAsk the staff for major changes that come with debt.```"
 
-                if choice == "army" and amount > data["houses"][index]["totalPopulation"] - data["houses"][index]["elderly"] - data["houses"][index]["children"] - 1:
-                    return "too much army"
+                    # new system : troops trained directly from city population to avoid big spawns
+                    houseCities = list(data["houses"][index]["cities"].keys())
+
+                    if cityToTrainFrom not in houseCities:
+                        return "Error. City not found."
+                    for i in range(len(houseCities)):
+                        if houseCities[i] == cityToTrainFrom:
+                            cityIndex = i
+                            break
+                    #try:
+                    cityData = data["houses"][index]["cities"][houseCities[cityIndex]]
+                    if amount > cityData["workingPopulation"]:
+                        return "**ERROR code 02hex2942**:`Cannot train more than current working population in "+cityToTrainFrom+ "`"
+                #    except:
+                    #    return "well this is awkward"
+
+
 
                 # else, normal mode
 
                 if (choice == "upperClassTax" and amount > self.upperClassTaxMax) or (choice == "middleClassTax" and amount > self.middleClassTaxMax) or (choice == "lowerClassTax" and amount > self.lowerClassTaxMax):
                     return "`Too high taxes ( " + str(self.upperClassTaxMax) + " max for upper class), ( " + str(self.middleClassTaxMax) + " max for middle class), ( " + str(self.lowerClassTaxMax) + " max for lower class),`"
 
-                if choice == "army" and futureExpenses > data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"] :
-                    return "```diff\n- Your future expenses would be higher as your income.\nThis is not possible to change over he bot.\nAsk the staff for major changes that come with debt.```"
-                data["houses"][index][choice] = amount
+                # changing
+
+                # for army, new system (see before) checks have already been done
+                if choice != "army":
+                    data["houses"][index][choice] = amount
+                else:
+                    cityData["army"] = amount
+
+                # self.recalculate_economy("all") | commented as done below anyways
+                """
+                # recalculating
                 data["houses"][index]["workingPopulation"] = int(data["houses"][index]["totalPopulation"] - data["houses"][index]["children"] - data["houses"][index]["elderly"] - data["houses"][index]["army"])
                 data["houses"][index]["men"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["menPart"])
                 data["houses"][index]["women"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["men"])
@@ -626,8 +685,10 @@ class house_database_handler:
                 data["houses"][index]["upperClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["upperClassRate"])
                 data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
                 data["houses"][index]["income"] = data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["upperClass"] * data["houses"][index]["upperClassTax"]
+
                 if choice == "army":
                     data["houses"][index]["expenses"] = amount * self.armySalary + data["houses"][index]["guards"] * self.guardsSalary
+                """
 
         if mode == "players":
             with open(self.pathToJson, "r") as db:
@@ -712,7 +773,7 @@ class house_database_handler:
             data = json.load(db)
             if house == "all":
                 for index in range(len(data["houses"])):
-                    totalElders = totalChildren = totalWomen = totalMen = totalWorkingPopulation = averageNatality = averageMortality = totalPopulation = 0
+                    totalElders = totalChildren = totalWomen = totalMen = totalWorkingPopulation = averageNatality = averageMortality = totalPopulation = totalArmy = 0
                     try:
                         houseCities = list(data["houses"][index]["cities"].keys())
                         for insideIndex in range(len(houseCities)):
@@ -737,6 +798,7 @@ class house_database_handler:
                             totalWomen = totalWomen + cityWomen
                             totalMen = totalMen + cityMen
                             totalWorkingPopulation = totalWorkingPopulation + cityWorkingPopulation
+                            totalArmy = totalArmy + cityData["army"]
                             averageNatality = averageNatality + cityNatality
                             averageMortality = averageMortality + cityMortality
                             totalPopulation = cityData["population"] + totalPopulation
@@ -764,7 +826,7 @@ class house_database_handler:
                     # we re a bit cheating here, simply displaying the value of the last city.. (shh)
                     data["houses"][index]["elderlyRate"] = cityEldersRate
                     data["houses"][index]["childrenRate"] = cityChildrenRate
-
+                    data["houses"][index]["army"] = totalArmy
                     data["houses"][index]["lowerClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["lowerClassRate"])
                     data["houses"][index]["upperClass"] = int(data["houses"][index]["workingPopulation"] * data["houses"][index]["upperClassRate"])
                     data["houses"][index]["middleClass"] = int(data["houses"][index]["workingPopulation"] - data["houses"][index]["lowerClass"] - data["houses"][index]["upperClass"])
@@ -773,6 +835,7 @@ class house_database_handler:
                     data["houses"][index]["nettoIncome"] = data["houses"][index]["income"] - data["houses"][index]["expenses"]
                     popularity = self.calculate_popularity(index)
                     data["houses"][index]["popularity"] = popularity
+
 
                     lower = data["houses"][index]["upperClassTax"] / 200
                     middle = data["houses"][index]["middleClassTax"] / 100
