@@ -384,7 +384,7 @@ class house_database_handler:
                         print(data["houses"][index]["cities"][givenCity])
                     except:
                         return "❌ - City Not Found."
-                    formattedInfo = str("\n```diff\n-        Population of city " + givenCity + ":\nCoordinates : \t"+ str(tuple(data["houses"][index]["cities"][givenCity]["coordinates"])) +"\nPopulation :  \t" + str(data["houses"][index]["cities"][givenCity]["population"]) + "\nMen :         \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["menPart"]) + "\nWomen :       \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["womenPart"]) + "\nChildren :    \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["childrenRate"]) + "\nElders :      \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["elderlyRate"]) + "\nWorking Pop :     " + str(data["houses"][index]["cities"][givenCity]["population"] - data["houses"][index]["cities"][givenCity]["children"] - data["houses"][index]["cities"][givenCity]["elderly"]) + "\nSoldiers :      " + str(data["houses"][index]["cities"][givenCity]["army"]) + "\nImmigration :     " + str(data["houses"][index]["cities"][givenCity]["immigration"] * 100) + "\nNatality :        " + str(data["houses"][index]["cities"][givenCity]["natality"] * 100) + "\nMortality :       " + str(data["houses"][index]["cities"][givenCity]["mortality"] * 100) + "\n```")
+                    formattedInfo = str("\n```diff\n-        Population of city " + givenCity + ":\nCoordinates : \t"+ str(tuple(data["houses"][index]["cities"][givenCity]["coordinates"])) +"\nPopulation :  \t" + str(data["houses"][index]["cities"][givenCity]["population"]) + "\nMen :         \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["menPart"]) + "\nWomen :       \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["womenPart"]) + "\nChildren :    \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["childrenRate"]) + "\nElders :      \t" + str(data["houses"][index]["cities"][givenCity]["population"] * data["houses"][index]["cities"][givenCity]["elderlyRate"]) + "\nWorking Pop :     " + str(data["houses"][index]["cities"][givenCity]["population"] - data["houses"][index]["cities"][givenCity]["children"] - data["houses"][index]["cities"][givenCity]["elderly"]) + "\nSoldiers :        " + str(data["houses"][index]["cities"][givenCity]["army"]) + "\nTroops in City :  " + str(data["houses"][index]["cities"][givenCity]["homeTroops"]) + "\nImmigration :     " + str(data["houses"][index]["cities"][givenCity]["immigration"] * 100) + "\nNatality :        " + str(data["houses"][index]["cities"][givenCity]["natality"] * 100) + "\nMortality :       " + str(data["houses"][index]["cities"][givenCity]["mortality"] * 100) + "\n```")
 
 
                 try:
@@ -782,7 +782,7 @@ class house_database_handler:
 
                             # THIS IS JUST TO ADD VALUES TO ALL CITIES
                             # i.e for future functions which will rely on those values and i dont want to make a bunch of try excepts etc to handle old and new versiosn
-                             ###cityData["troopMovements"] = []
+                            #cityData["homeTroops"] = cityData["army"]
 
                             coordinates = tuple(cityData["coordinates"])
                             cityElders = cityData["elderlyRate"] * cityData["population"]
@@ -941,7 +941,7 @@ class house_database_handler:
                     break
             done = 0
 
-            if amount > cityFromData["army"]:
+            if amount > cityFromData["homeTroops"]:
                 return "error. you dont have that much troops in "+ cityFrom
 
             # long and unoptimized but welp, scan everyon to get the cityData
@@ -969,20 +969,73 @@ class house_database_handler:
             cycleHour = 6
             squarePerCycle = 2
             if amount < 100:
-                squarePerCycle = 1.5
+                squarePerCycle = 3
             # format is in hours IRL
-            requiredTime = round(numberOfSquares * (squarePerCycle / cycleHour))
+            requiredTime = round(numberOfSquares * (cycleHour / squarePerCycle))
             print(requiredTime)
             # Step 3. Log
 
             now = datetime.now()
             arrivalTime = now + timedelta(hours=requiredTime)
+            numberOfMovements = len(cityFromData["troopMovements"])
+            movementID = numberOfMovements+1
+            formattedLog = [movementID, str(amount), str(cityDestination), str(arrivalTime), "unfinished"]
 
-            formattedLog = str(amount)+";"+cityDestination+";"+str(arrivalTime)
+            cityFromData["homeTroops"] = cityFromData["army"] - amount
+
             cityFromData["troopMovements"].append(formattedLog)
             self.overwrite_json_db(data)
 
             return "Moving "+str(amount)+" soldiers from "+cityFrom+" to "+cityDestination+".\nWill arrive at " +str(arrivalTime)+" (takes " + str(requiredTime) +" hours)"
+
+    def listMovements(self, house, mode):
+        # mode is either "staff" or "house", meaning house members can only watch movements of their own house
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+            # Step 1. Check everything
+            index = self.find_index_in_db(data["houses"], house)
+            formattedReturn = "```diff\n- Active movements for house " + str(house)
+            houseCities = list(data["houses"][index]["cities"].keys())
+            for innerIndex in range(len(houseCities)):
+                cityData = data["houses"][index]["cities"][houseCities[innerIndex]]
+                for innerInner in range(len(cityData["troopMovements"])):
+                    status = cityData["troopMovements"][innerInner][4]
+                    if status == "finished":
+                        continue
+                    formattedReturn = formattedReturn + "\n\nID: "+str(cityData["troopMovements"][innerInner][0])+" ; "+ cityData["troopMovements"][innerInner][1] + " troops ; " + houseCities[innerIndex] + " -> "+ cityData["troopMovements"][innerInner][2] +"\nArrival: "+ str(cityData["troopMovements"][innerInner][3])
+            formattedReturn = formattedReturn+"```"
+            return str(formattedReturn)
+
+    def clearMovement(self, house, cityToClearFrom, movementID, mode="usual"):
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+
+            index = self.find_index_in_db(data["houses"], house)
+            houseCities = list(data["houses"][index]["cities"].keys())
+
+            for innerIndex in range(len(houseCities)):
+                if houseCities[innerIndex] == cityToClearFrom:
+                    cityData = data["houses"][index]["cities"][houseCities[innerIndex]]
+                    break
+            movements = cityData["troopMovements"]
+
+            for i in range(len(movements)):
+                if movements[i][0] == int(movementID):
+                    movement = movements[i]
+            # RETURN this , to ask if sure, so staff dont delete random movements.
+            if mode == "safe":
+                formattedReturn = "ID: "+str(movement[0])+" ; "+ movement[1] + " troops ; " + houseCities[innerIndex] + " -> "+ movement[2] +"\nArrival: "+ str(movement[3])
+
+                return "`Are you sure you want to clear movement:: \n" + formattedReturn + "`" + "\n[y/N]:"
+
+            movementTroops = int(movement[1])
+            cityData["homeTroops"] = cityData["homeTroops"] + movementTroops
+            movement[4] = "finished"
+
+            self.overwrite_json_db(data)
+
+
+            return ">> Movement ID " + str(movementID) + " of city " + cityToClearFrom + " cleared.(dab)"
 
 
 
@@ -993,4 +1046,5 @@ class house_database_handler:
 
 # bruh, line 652 the 1st february 2020
 # 26th february 2020, 839 lines
+# 6th april, 1048 lines, finally finished a basic troops movement system.!!!!!
 # EOF
