@@ -1,8 +1,9 @@
 import json
 import os, time
 import random
+import math
 from datetime import datetime
-
+from datetime import timedelta
 
 """
 
@@ -639,8 +640,8 @@ class house_database_handler:
 
 
                 if choice == "army":
-                    if amount > data["houses"][index]["totalPopulation"] - data["houses"][index]["elderly"] - data["houses"][index]["children"] - 1:
-                        return "too much army"
+                    #if amount > data["houses"][index]["totalPopulation"] - data["houses"][index]["elderly"] - data["houses"][index]["children"] - 1:
+                    #    return "too much army"
                     if futureExpenses > data["houses"][index]["middleClass"] * data["houses"][index]["middleClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["lowerClassTax"] + data["houses"][index]["lowerClass"] * data["houses"][index]["upperClassTax"]:
                         return "```diff\n- Your future expenses would be higher as your income.\nThis is not possible to change over he bot.\nAsk the staff for major changes that come with debt.```"
 
@@ -778,6 +779,11 @@ class house_database_handler:
                         houseCities = list(data["houses"][index]["cities"].keys())
                         for insideIndex in range(len(houseCities)):
                             cityData = data["houses"][index]["cities"][houseCities[insideIndex]]
+
+                            # THIS IS JUST TO ADD VALUES TO ALL CITIES
+                            # i.e for future functions which will rely on those values and i dont want to make a bunch of try excepts etc to handle old and new versiosn
+                             ###cityData["troopMovements"] = []
+
                             coordinates = tuple(cityData["coordinates"])
                             cityElders = cityData["elderlyRate"] * cityData["population"]
                             cityData["elderly"] = cityElders
@@ -914,6 +920,75 @@ class house_database_handler:
                 except:
                     pass
             return resultChar
+
+    def travelTroops(self, house, cityFrom, cityDestination, amount):
+        # so we wanna move troops from our house, from a specific city, to another city.
+        # the goal is to log that in the database and calculate travel time automatically.
+        print(cityFrom, cityDestination)
+        with open(self.pathToJson, "r") as db:
+            data = json.load(db)
+            # Step 1. Check everything
+            index = self.find_index_in_db(data["houses"], house)
+
+            houseCities = list(data["houses"][index]["cities"].keys())
+
+            if cityFrom not in houseCities:
+                return "error. "+cityFrom+" not found in your house's cities."
+            for i in range(len(houseCities)):
+                if houseCities[i] == cityFrom:
+                    #cityFromIndex = i
+                    cityFromData = data["houses"][index]["cities"][houseCities[i]]
+                    break
+            done = 0
+
+            if amount > cityFromData["army"]:
+                return "error. you dont have that much troops in "+ cityFrom
+
+            # long and unoptimized but welp, scan everyon to get the cityData
+            for specificIndex in range(len(data["houses"])):
+                houseCities = list(data["houses"][specificIndex]["cities"].keys())
+                for insideIndex in range(len(houseCities)):
+                    if houseCities[insideIndex] == cityDestination:
+                        cityDestinationData = data["houses"][specificIndex]["cities"][houseCities[insideIndex]]
+                        done = 1
+                        break
+
+            # not found in a loop through all cities, take as inexistant.
+            if not done: return "error. Destination city "+cityDestination+" not found."
+
+            # Step 2. Get the values and calculate.
+
+            cityFromX = cityFromData["coordinates"][0]
+            cityFromY = cityFromData["coordinates"][1]
+            cityToX = cityDestinationData["coordinates"][0]
+            cityToY = cityDestinationData["coordinates"][1]
+
+            numberOfSquares = round(math.sqrt( (cityToX - cityFromX)**2 +  (cityToY - cityFromY)**2 ))
+            print(numberOfSquares)
+            # reminder : on roads, which we will pick as default, we move 2 squares per cycle, on cycle being 6 hours IRL
+            cycleHour = 6
+            squarePerCycle = 2
+            if amount < 100:
+                squarePerCycle = 1.5
+            # format is in hours IRL
+            requiredTime = round(numberOfSquares * (squarePerCycle / cycleHour))
+            print(requiredTime)
+            # Step 3. Log
+
+            now = datetime.now()
+            arrivalTime = now + timedelta(hours=requiredTime)
+
+            formattedLog = str(amount)+";"+cityDestination+";"+str(arrivalTime)
+            cityFromData["troopMovements"].append(formattedLog)
+            self.overwrite_json_db(data)
+
+            return "Moving "+str(amount)+" soldiers from "+cityFrom+" to "+cityDestination+".\nWill arrive at " +str(arrivalTime)+" (takes " + str(requiredTime) +" hours)"
+
+
+
+
+
+
 
 
 # bruh, line 652 the 1st february 2020
