@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "N o"
+token = "No"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -64,6 +64,9 @@ async def getInput(message):
     answer = await client.wait_for('message', check=lambda response : response.author == message.author and response.content.startswith(":") == True)
     answer = answer.content.split(":")[1].strip()
     answer = answer.lower().strip()
+    if answer == "abort" or answer == "stop":
+        print()
+        return ValueError
     return answer
 
 async def sendError(error="error", channel="REE"):
@@ -385,6 +388,9 @@ async def on_message(message):
         return 0
 
     elif command in ["movetroops", "troops", "traveltroops"]:
+        if houseManagingPermission == 0 and staffMemberRequest == 0:
+            await sendError("House leader only.", channel)
+            return 0
         # check all needed variables
         cityFrom = param[1]
         destination = param[2]
@@ -414,6 +420,61 @@ async def on_message(message):
             await sendError(travelTroops, channel)
         else:
             await sendEmbed(worked, travelTroops, channel)
+
+    elif command in ["listtroops", "listmovements", "movements"]:
+        """
+        ### currently not listing per city but per house
+        cityToList = param[1]
+        if cityToList == "None":
+            await sendRequest("City check current movements : ", channel)
+            cityToList = await getInput(message)
+        """
+
+        if staffMemberRequest == 1:
+            mode = "staff"
+            await sendRequest("Enter house : ", channel)
+            member = await getInput(message)
+
+        else:
+            mode = "house"
+        # if houseleader, only list from your house, staff is from any house
+        cityMovementList = db.listMovements(member, mode)
+
+        if "error" in cityMovementList:
+            await sendError(cityMovementList, channel)
+        else:
+            await channel.send(cityMovementList)
+
+    elif command in ["cleartroops", "clearmovement"]:
+        if staffMemberRequest == 0:
+            await sendError("Staff only", channel)
+            return
+        member = param[1]
+        cityToClearFrom = param[2]
+        movementID = param[3]
+        if member == "None":
+            await sendRequest("House : ", channel)
+            member = await getInput(message)
+        if cityToClearFrom == "None":
+            await sendRequest("City to clear from : ", channel)
+            cityToClearFrom = await getInput(message)
+        if movementID == "None":
+            await sendRequest("Movement ID : ", channel)
+            movementID = await getInput(message)
+
+        beSafe = db.clearMovement(member, cityToClearFrom, movementID, "safe")
+        await sendRequest(beSafe, channel)
+        beSafeRespond = await getInput(message)
+        if beSafeRespond not in ["y", "yes"]:
+            await sendError("Abort.", channel)
+            return
+
+        clearStatus = db.clearMovement(member, cityToClearFrom, movementID)
+
+        if "error" in clearStatus:
+            await sendError(clearStatus, channel)
+        else:
+            await sendEmbed("💥", clearStatus, channel)
 
     elif command in ["guild", "guildinfo"]:
         guildParam = param[1]
@@ -960,6 +1021,7 @@ async def on_message(message):
             embed.add_field(name=usedPrefix+"me ( change guards AMOUNT(max3 or 5 for house leader) )", value="Details about your character and change guards\nAliases : "+usedPrefix+"personal", inline=False)
             embed.add_field(name=usedPrefix+"travel", value="Log your travel for staff\nAliases : "+usedPrefix+"move", inline=False)
             embed.add_field(name=usedPrefix+"troops CityFrom CityTo Amount", value="Send soldiers to another city.\nAliases : "+usedPrefix+"moveTroops, travelTroops", inline=False)
+            embed.add_field(name=usedPrefix+"movements", value="List all current troop movements of your house.\nAliases : "+usedPrefix+"listMovements, listTroops", inline=False)
 
             embed.add_field(name=usedPrefix+"guild", value="GUILD MEMBERS ONLY\nAliases : "+usedPrefix+"guildInfo", inline=False)
 
@@ -974,6 +1036,7 @@ async def on_message(message):
             embed.add_field(name=usedPrefix+"merge HOUSE_FROM HOUSE_TO", value="Merge two houses\nAliases : "+usedPrefix+"None", inline=False)
             embed.add_field(name=usedPrefix+"changeHouse HOUSE_NAME VALUE NEWVALUE", value="Change house value\nAliases : "+usedPrefix+"staff1", inline=False)
             embed.add_field(name=usedPrefix+"changePlayer", value="Change Player value\nAliases : "+usedPrefix+"staff2", inline=False)
+            embed.add_field(name=usedPrefix+"clearTroops", value="Staff can reset a movement (soldiers available again for the city).\nAliases : "+usedPrefix+"clearMovement", inline=False)
 
         else:
             embed=discord.Embed(title="Manual", description="General Search", color=0xc5bcc5)
@@ -1022,8 +1085,13 @@ async def on_message(message):
                 embed.add_field(name=usedPrefix+"changeHouse HOUSE_NAME VALUE NEWVALUE", value="Change house value\nAliases : "+usedPrefix+"staff1", inline=False)
             elif category in ["changeplayer", "staff2"]:
                 embed.add_field(name=usedPrefix+"changePlayer", value="Change Player value\nAliases : "+usedPrefix+"staff2", inline=False)
-            elif category in ["moveTroops", "travelTroops", "troops"]:
+            elif category in ["movetroops", "traveltroops", "troops"]:
                 embed.add_field(name=usedPrefix+"troops CityFrom CityTo Amount", value="Send soldiers to another city.\nAliases : "+usedPrefix+"moveTroopss", inline=False)
+            elif category in ["movements", "listmovements", "listtroops"]:
+                embed.add_field(name=usedPrefix+"movements", value="List all current troop movements of your house.\nAliases : "+usedPrefix+"listMovements, listTroops", inline=False)
+            elif category in ["cleartroops", "clearmovement"]:
+                embed.add_field(name=usedPrefix+"clearTroops", value="Staff can reset a movement (soldiers available again for the city).\nAliases : "+usedPrefix+"clearMovement", inline=False)
+
             else:
                 embed.add_field(name="Not Found", value="N/A", inline=False)
         await channel.send(embed=embed)
@@ -1271,4 +1339,4 @@ client.run(token)
 # hmm, 30.01.20 - 947 lines
 # actually, 1st february : doing a lot of optimization, so - 913 lines ! (nice)
 # 22th of february. 1068 lines ! and finally vacations...
-# 6th april.... corona "vacations" 1240 lines
+# 6th april.... corona "vacations" 1342 lines, added movement system for troops
