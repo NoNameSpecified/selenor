@@ -39,7 +39,7 @@ INFO :
 db = house_database_handler("database.json")
 BOT_PREFIX = ("]", "?", "/", "\\")
 # Oof close your eyes please !
-token = "i just had to change the token again goddamnit"
+token = "N o"
 worked = "✅"
 someError = "❌"
 client = Bot(command_prefix=BOT_PREFIX)
@@ -383,6 +383,37 @@ async def on_message(message):
         request = db.travel(member, destination)
         await channel.send(request)
         return 0
+
+    elif command in ["movetroops", "troops", "traveltroops"]:
+        # check all needed variables
+        cityFrom = param[1]
+        destination = param[2]
+        troopsAmount = param[3]
+
+        if cityFrom == "None":
+            await channel.send("`INFO : Must be one of your cities, please enter the exact name.\n(If unsure, check \\stats or ask staff.)`")
+            await sendRequest("City to take troops from : ", channel)
+            cityFrom = await getInput(message)
+
+        if destination == "None":
+            await channel.send("`INFO : Must be a city name, please enter the exact name.\n(If unsure, check out \\cities or ask a player/staff.)`")
+            await sendRequest("Enter Destionation : ", channel)
+            destination = await getInput(message)
+
+        if troopsAmount == "None":
+            await sendRequest("Number of soldiers: ", channel)
+            troopsAmount = await getInput(message)
+        try:
+            troopsAmount = int(troopsAmount)
+        except:
+            await sendError("Amount needs to be integer.")
+            return
+
+        travelTroops = db.travelTroops(member, cityFrom, destination, troopsAmount)
+        if "error" in travelTroops:
+            await sendError(travelTroops, channel)
+        else:
+            await sendEmbed(worked, travelTroops, channel)
 
     elif command in ["guild", "guildinfo"]:
         guildParam = param[1]
@@ -928,6 +959,7 @@ async def on_message(message):
             embed.add_field(name=usedPrefix+"inventory", value="List items you bought\nAliases : "+usedPrefix+"stuff", inline=False)
             embed.add_field(name=usedPrefix+"me ( change guards AMOUNT(max3 or 5 for house leader) )", value="Details about your character and change guards\nAliases : "+usedPrefix+"personal", inline=False)
             embed.add_field(name=usedPrefix+"travel", value="Log your travel for staff\nAliases : "+usedPrefix+"move", inline=False)
+            embed.add_field(name=usedPrefix+"troops CityFrom CityTo Amount", value="Send soldiers to another city.\nAliases : "+usedPrefix+"moveTroops, travelTroops", inline=False)
 
             embed.add_field(name=usedPrefix+"guild", value="GUILD MEMBERS ONLY\nAliases : "+usedPrefix+"guildInfo", inline=False)
 
@@ -990,6 +1022,8 @@ async def on_message(message):
                 embed.add_field(name=usedPrefix+"changeHouse HOUSE_NAME VALUE NEWVALUE", value="Change house value\nAliases : "+usedPrefix+"staff1", inline=False)
             elif category in ["changeplayer", "staff2"]:
                 embed.add_field(name=usedPrefix+"changePlayer", value="Change Player value\nAliases : "+usedPrefix+"staff2", inline=False)
+            elif category in ["moveTroops", "travelTroops", "troops"]:
+                embed.add_field(name=usedPrefix+"troops CityFrom CityTo Amount", value="Send soldiers to another city.\nAliases : "+usedPrefix+"moveTroopss", inline=False)
             else:
                 embed.add_field(name="Not Found", value="N/A", inline=False)
         await channel.send(embed=embed)
@@ -1197,7 +1231,7 @@ async def on_message(message):
 
     # everything failed
     else:
-        await sendError("Command not found, Use "+usedPrefix+"man/manual to get help", channel)
+        await sendError("Command not found, Use "+usedPrefix+"man/manual to get help\nOr feel free to ask other players in the general chat :)", channel)
 
 
 
@@ -1224,6 +1258,8 @@ async def on_message(message):
     'oh but why you include that in here ?'
     well its the end of the code so im free !
 
+    06.04.20 : dang >:( c o r o n a
+
     """
 
 
@@ -1235,3 +1271,4 @@ client.run(token)
 # hmm, 30.01.20 - 947 lines
 # actually, 1st february : doing a lot of optimization, so - 913 lines ! (nice)
 # 22th of february. 1068 lines ! and finally vacations...
+# 6th april.... corona "vacations" 1240 lines
