@@ -51,7 +51,14 @@
                     "childrenRate": 0,
                     "elderlyRate": 0,
                     "mortality": 0,
-                    "army": 0
+                    "army": 0",
+                    "troopMovements": [
+                        movement ID,
+                        "amount of soldiers",
+                        "city to go for",
+                        "arrival time"
+                    ],
+                    "homeTroops": army - all troops in movement
                 }
             }
         }
