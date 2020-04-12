@@ -250,7 +250,8 @@ class house_database_handler:
                     data["houses"][index]["inventory"][item] = amount
 
                 if item == "school":
-                    data["houses"][index]["lowerClassRate"] = data["houses"][index]["lowerClassRate"] - 0.03
+                    if (data["houses"][index]["lowerClassRate"] < 0.1) == False:
+                        data["houses"][index]["lowerClassRate"] = data["houses"][index]["lowerClassRate"] - (0.03 * amount)
 
                 elif item == "city":
                     for i in range(len(data["houses"])):
@@ -304,6 +305,8 @@ class house_database_handler:
                                     "childrenRate" : childrenRate,
                                     "elderlyRate" : elderlyRate,
                                     "mortality" : mortality,
+                                    "troopMovements": [],
+                                    "army": 0
                                                 }
 
                     except Exception as e:
@@ -599,6 +602,8 @@ class house_database_handler:
                         "childrenRate" : childrenRate,
                         "elderlyRate" : elderlyRate,
                         "mortality" : mortality,
+                        "troopMovements" : [],
+                        "army": 0
                                     }
                     }
         })
@@ -675,6 +680,7 @@ class house_database_handler:
                     data["houses"][index][choice] = amount
                 else:
                     cityData["army"] = amount
+                    cityData["homeTroops"] = amount
 
                 # self.recalculate_economy("all") | commented as done below anyways
                 """
@@ -778,11 +784,13 @@ class house_database_handler:
                     try:
                         houseCities = list(data["houses"][index]["cities"].keys())
                         for insideIndex in range(len(houseCities)):
+                            cityTroopsUsed = 0
                             cityData = data["houses"][index]["cities"][houseCities[insideIndex]]
 
                             # THIS IS JUST TO ADD VALUES TO ALL CITIES
                             # i.e for future functions which will rely on those values and i dont want to make a bunch of try excepts etc to handle old and new versiosn
-                            #cityData["homeTroops"] = cityData["army"]
+                            #if houseCities != "callafield":
+                            #    cityData["homeTroops"] = cityData["army"]
 
                             coordinates = tuple(cityData["coordinates"])
                             cityElders = cityData["elderlyRate"] * cityData["population"]
@@ -795,6 +803,13 @@ class house_database_handler:
                             cityData["men"] = cityMen
                             cityWomen = cityData["womenPart"] * cityData["population"]
                             cityData["women"] = cityWomen
+
+                            movements = cityData["troopMovements"]
+
+                            for iii in range(len(movements)):
+                                if movements[iii][4] != "finished":
+                                    cityTroopsUsed = cityTroopsUsed + int(movements[iii][1])
+                            cityData["homeTroops"] = cityData["army"] - cityTroopsUsed
 
                             cityNatality = cityData["natality"]
                             cityMortality = cityData["mortality"]
