@@ -207,7 +207,8 @@ async def on_message(message):
                 cityName = rawCityData[houseName][innerIndex][0]
                 cityCoordinates = rawCityData[houseName][innerIndex][1]
                 houseReport = houseReport + "\nCity : "+str(cityName)+"    Coordinates : "+str(cityCoordinates)
-
+            # ex if hosue has no cities as they got captured or so
+            if houseReport == "": continue
             embed.add_field(name="House "+houseName, value=houseReport, inline=True)
 
         await channel.send(embed=embed)
